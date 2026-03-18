@@ -252,7 +252,17 @@
                     <div class="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between gap-4 bg-gray-50/50">
                         <div class="relative w-full md:w-96">
                             <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
-                            <input type="text" id="inv-search" class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-success focus:border-success outline-none text-sm" placeholder="ค้นหาด้วยชื่อ หรือ บาร์โค้ด...">
+                            <input type="text" id="inv-search" oninput="filterInventory()" class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-success focus:border-success outline-none text-sm" placeholder="ค้นหาด้วยชื่อ หรือ บาร์โค้ด...">
+                        </div>
+                        <div class="flex gap-2">
+                            <select id="inv-category-filter" onchange="filterInventory()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-success focus:border-success bg-white text-gray-700">
+                                <option value="All">ทุกหมวดหมู่</option>
+                                <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                                <option value="ขนมสแน็ค">ขนมสแน็ค</option>
+                                <option value="ของใช้">ของใช้</option>
+                                <option value="วัตถุดิบ">วัตถุดิบ</option>
+                                <option value="อื่นๆ">อื่นๆ</option>
+                            </select>
                         </div>
                     </div>
                     <div class="overflow-x-auto h-[50vh]">
@@ -669,6 +679,16 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อสินค้า <span class="text-red-500">*</span></label>
                     <input type="text" id="form-name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
+                    <select id="form-category" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none bg-white">
+                        <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                        <option value="ขนมสแน็ค">ขนมสแน็ค</option>
+                        <option value="ของใช้">ของใช้</option>
+                        <option value="วัตถุดิบ">วัตถุดิบ</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">ต้นทุน (บาท) <span class="text-red-500">*</span></label>
@@ -785,7 +805,7 @@
                 const products = [];
                 snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
                 window.appState.products = products;
-                renderInventory();
+                filterInventory(); // เปลี่ยนจาก renderInventory เป็น filterInventory เพื่อใช้การจัดเรียง
                 renderSearchModalGrid();
             });
 
@@ -1151,14 +1171,36 @@
         }
 
         // --- INVENTORY ---
-        function renderInventory() {
+        window.filterInventory = function() {
+            const query = document.getElementById('inv-search').value.toLowerCase();
+            const category = document.getElementById('inv-category-filter').value;
+
+            let filtered = window.appState.products.filter(p => {
+                const matchQuery = p.name.toLowerCase().includes(query) || p.barcode.includes(query);
+                const matchCategory = category === 'All' || p.category === category || (!p.category && category === 'อื่นๆ');
+                return matchQuery && matchCategory;
+            });
+
+            // จัดเรียง: สินค้าที่ใกล้หมดสต็อกอยู่บนสุด (stock น้อยไปมาก)
+            filtered.sort((a, b) => {
+                const stockA = a.isWeighed ? Infinity : a.stock;
+                const stockB = b.isWeighed ? Infinity : b.stock;
+                return stockA - stockB;
+            });
+
+            renderInventory(filtered);
+        };
+
+        function renderInventory(products = window.appState.products) {
             const tbody = document.getElementById('inventory-table-body');
-            const products = window.appState.products;
-            if(products.length === 0) return tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">ยังไม่มีสินค้า</td></tr>';
+            if(products.length === 0) return tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">ไม่พบสินค้า</td></tr>';
 
             tbody.innerHTML = products.map(p => `
                 <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                    <td class="p-4"><span class="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-600">${p.barcode}</span></td>
+                    <td class="p-4">
+                        <span class="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-600 block w-max">${p.barcode}</span>
+                        <span class="text-[10px] text-gray-400 mt-1 block">${p.category || 'อื่นๆ'}</span>
+                    </td>
                     <td class="p-4 font-medium">${p.name}</td>
                     <td class="p-4 text-right text-gray-500">฿${(p.cost || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                     <td class="p-4 text-right text-primary font-medium">฿${p.price.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
@@ -1389,6 +1431,7 @@
             currentEditId = null;
             document.getElementById('form-barcode').value = '';
             document.getElementById('form-name').value = '';
+            document.getElementById('form-category').value = 'เครื่องดื่ม';
             document.getElementById('form-cost').value = '';
             document.getElementById('form-price').value = '';
             document.getElementById('form-stock').value = '';
@@ -1472,6 +1515,7 @@
             currentEditId = id;
             document.getElementById('form-barcode').value = product.barcode;
             document.getElementById('form-name').value = product.name;
+            document.getElementById('form-category').value = product.category || 'อื่นๆ';
             document.getElementById('form-cost').value = product.cost || 0;
             document.getElementById('form-price').value = product.price;
             document.getElementById('form-stock').value = product.stock;
@@ -1498,6 +1542,7 @@
             if(!window.appState.user) return;
             const barcode = document.getElementById('form-barcode').value.trim();
             const name = document.getElementById('form-name').value.trim();
+            const category = document.getElementById('form-category').value;
             const cost = parseFloat(document.getElementById('form-cost').value) || 0;
             const price = parseFloat(document.getElementById('form-price').value);
             const stock = parseInt(document.getElementById('form-stock').value);
@@ -1505,7 +1550,7 @@
             const image = document.getElementById('form-image-base64').value;
 
             if(!barcode || !name || isNaN(price) || isNaN(stock)) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', 'warning');
-            const productData = { barcode, name, cost, price, stock, isWeighed, image, updatedAt: Date.now() };
+            const productData = { barcode, name, category, cost, price, stock, isWeighed, image, updatedAt: Date.now() };
 
             try {
                 if(currentEditId) {
@@ -1544,10 +1589,10 @@
                     Swal.fire({ title: 'กำลังสร้างข้อมูล...', text: 'อาจใช้เวลาสักครู่ กรุณารอจนกว่าจะเสร็จ', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                     try {
                         const categories = [
-                            { keyword: 'beverage', prefix: '885100', items: ['น้ำดื่มคริสตัล 600ml', 'น้ำดื่มสิงห์ 1500ml', 'เป๊ปซี่ 320ml', 'โค้ก กระป๋อง 325ml', 'สไปรท์ 1.25L', 'แฟนต้า น้ำแดง 1.25L', 'ช้าง โคลด์บรูว์ 620ml', 'สิงห์ เลมอนโซดา', 'โออิชิ กรีนที ต้นตำรับ', 'อิชิตัน รสน้ำผึ้งผสมมะนาว', 'ลิปตัน ไอซ์ที', 'น้ำแร่ ออรา 500ml', 'มิเนเร่ น้ำแร่ธรรมชาติ', 'เนสกาแฟ กระป๋อง เอสเปรสโซ่', 'เบอร์ดี้ โรบัสต้า', 'กระทิงแดง', 'เอ็ม-150', 'คาราบาวแดง', 'สปอนเซอร์ ออริจินัล', 'เกลือแร่ โพคารี่สเวท', 'น้ำผลไม้ ทิปโก้ ส้ม', 'มาลี น้ำแอปเปิ้ล', 'ดัชมิลล์ 4อิน1', 'นมเมจิ รสจืด 200ml', 'ไวตามิ้ลค์ ทูโก'] },
-                            { keyword: 'snack', prefix: '885200', items: ['เลย์ รสออริจินัล 50g', 'เลย์ รสโนริสาหร่าย 50g', 'เลย์ รสบาร์บีคิว', 'เทสโต รสปูผัดผงกะหรี่', 'พริงเกิลส์ ซาวครีม', 'ตะวัน รสหมึกย่าง', 'ซันไบทส์ รสบาร์บีคิว', 'โดริโทส รสนาโชชีส', 'ป๊อกกี้ สตรอเบอร์รี่', 'ป๊อกกี้ ช็อกโกแลต', 'เพรทซ์ รสลาบ', 'เพรทซ์ รสต้มยำกุ้ง', 'คอร์นพัฟฟ์', 'ฮานามิ ข้าวเกรียบกุ้ง', 'ปูไทย', 'คอนเน่', 'โปเต้', 'ปาปริก้า', 'ทาโร่ รสเข้มข้น', 'เบนโตะ รสทรงเครื่อง', 'สแน็คแจ๊ค', 'เถ้าแก่น้อย แผ่นคลาสสิค', 'มาม่าดิบ รสช็อกโกแลต', 'ช็อกโกแลต M&M', 'สนิกเกอร์ส'] },
-                            { keyword: 'soap', prefix: '885300', items: ['สบู่ นกแก้ว สีเขียว', 'สบู่ ลักส์ ซอฟท์ โรส', 'ครีมอาบน้ำ โชกุบุสซึ', 'ครีมอาบน้ำ บีไนซ์', 'แชมพู ซันซิล สีชมพู', 'แชมพู แพนทีน คลาสสิค', 'แชมพู เคลียร์ เมน', 'แชมพู เฮดแอนด์โชว์เดอร์', 'ยาสีฟัน คอลเกต 150g', 'ยาสีฟัน ดาร์ลี่', 'ยาสีฟัน เซนโซดายน์', 'แปรงสีฟัน ซิสเท็มมา', 'น้ำยาบ้วนปาก ลิสเตอรีน', 'โฟมล้างหน้า พอนด์ส', 'โฟมล้างหน้า การ์นิเย่', 'โฟม นีเวีย เมน', 'โรลออน เรโซนา', 'โรลออน นีเวีย', 'แป้งเย็น เภสัช', 'แป้ง โพรเทคส์', 'กระดาษทิชชู่ คลีเน็กซ์', 'สำลีแผ่น รถพยาบาล', 'ผ้าอนามัย ลอรีเอะ', 'ผ้าอนามัย โซฟี', 'มีดโกน ยิลเลตต์'] },
-                            { keyword: 'grocery', prefix: '885400', items: ['มาม่า รสหมูสับ', 'มาม่า รสต้มยำกุ้ง', 'ไวไว รสปรุงเด็ด', 'ยำยำ จัมโบ้ รสหมูสับ', 'ข้าวหอมมะลิ ตราฉัตร 5kg', 'ข้าวขาว แสนดี', 'น้ำปลา ทิพรส', 'น้ำปลา หยดทอง', 'ซอสหอยนางรม แม็กกี้', 'ซอสปรุงรส ภูเขาทอง', 'ซีอิ๊วขาว เด็กสมบูรณ์', 'น้ำส้มสายชู อสร.', 'น้ำตาลทราย มิตรผล 1kg', 'น้ำตาลทราย ลิน', 'เกลือปรุงทิพย์', 'ผงชูรส อายิโนะโมะโต๊ะ', 'รสดี รสหมู', 'คนอร์ ก้อน รสหมู', 'น้ำมันถั่วเหลือง องุ่น 1L', 'น้ำมันปาล์ม มรกต 1L', 'ปลากระป๋อง สามแม่ครัว', 'ปลากระป๋อง โรซ่า', 'ซอสพริก ศรีราชา', 'ซอสมะเขือเทศ ไฮนซ์', 'พริกไทยป่น ง่วนสูน'] }
+                            { keyword: 'beverage', catName: 'เครื่องดื่ม', prefix: '885100', items: ['น้ำดื่มคริสตัล 600ml', 'น้ำดื่มสิงห์ 1500ml', 'เป๊ปซี่ 320ml', 'โค้ก กระป๋อง 325ml', 'สไปรท์ 1.25L', 'แฟนต้า น้ำแดง 1.25L', 'ช้าง โคลด์บรูว์ 620ml', 'สิงห์ เลมอนโซดา', 'โออิชิ กรีนที ต้นตำรับ', 'อิชิตัน รสน้ำผึ้งผสมมะนาว', 'ลิปตัน ไอซ์ที', 'น้ำแร่ ออรา 500ml', 'มิเนเร่ น้ำแร่ธรรมชาติ', 'เนสกาแฟ กระป๋อง เอสเปรสโซ่', 'เบอร์ดี้ โรบัสต้า', 'กระทิงแดง', 'เอ็ม-150', 'คาราบาวแดง', 'สปอนเซอร์ ออริจินัล', 'เกลือแร่ โพคารี่สเวท', 'น้ำผลไม้ ทิปโก้ ส้ม', 'มาลี น้ำแอปเปิ้ล', 'ดัชมิลล์ 4อิน1', 'นมเมจิ รสจืด 200ml', 'ไวตามิ้ลค์ ทูโก'] },
+                            { keyword: 'snack', catName: 'ขนมสแน็ค', prefix: '885200', items: ['เลย์ รสออริจินัล 50g', 'เลย์ รสโนริสาหร่าย 50g', 'เลย์ รสบาร์บีคิว', 'เทสโต รสปูผัดผงกะหรี่', 'พริงเกิลส์ ซาวครีม', 'ตะวัน รสหมึกย่าง', 'ซันไบทส์ รสบาร์บีคิว', 'โดริโทส รสนาโชชีส', 'ป๊อกกี้ สตรอเบอร์รี่', 'ป๊อกกี้ ช็อกโกแลต', 'เพรทซ์ รสลาบ', 'เพรทซ์ รสต้มยำกุ้ง', 'คอร์นพัฟฟ์', 'ฮานามิ ข้าวเกรียบกุ้ง', 'ปูไทย', 'คอนเน่', 'โปเต้', 'ปาปริก้า', 'ทาโร่ รสเข้มข้น', 'เบนโตะ รสทรงเครื่อง', 'สแน็คแจ๊ค', 'เถ้าแก่น้อย แผ่นคลาสสิค', 'มาม่าดิบ รสช็อกโกแลต', 'ช็อกโกแลต M&M', 'สนิกเกอร์ส'] },
+                            { keyword: 'soap', catName: 'ของใช้', prefix: '885300', items: ['สบู่ นกแก้ว สีเขียว', 'สบู่ ลักส์ ซอฟท์ โรส', 'ครีมอาบน้ำ โชกุบุสซึ', 'ครีมอาบน้ำ บีไนซ์', 'แชมพู ซันซิล สีชมพู', 'แชมพู แพนทีน คลาสสิค', 'แชมพู เคลียร์ เมน', 'แชมพู เฮดแอนด์โชว์เดอร์', 'ยาสีฟัน คอลเกต 150g', 'ยาสีฟัน ดาร์ลี่', 'ยาสีฟัน เซนโซดายน์', 'แปรงสีฟัน ซิสเท็มมา', 'น้ำยาบ้วนปาก ลิสเตอรีน', 'โฟมล้างหน้า พอนด์ส', 'โฟมล้างหน้า การ์นิเย่', 'โฟม นีเวีย เมน', 'โรลออน เรโซนา', 'โรลออน นีเวีย', 'แป้งเย็น เภสัช', 'แป้ง โพรเทคส์', 'กระดาษทิชชู่ คลีเน็กซ์', 'สำลีแผ่น รถพยาบาล', 'ผ้าอนามัย ลอรีเอะ', 'ผ้าอนามัย โซฟี', 'มีดโกน ยิลเลตต์'] },
+                            { keyword: 'grocery', catName: 'วัตถุดิบ', prefix: '885400', items: ['มาม่า รสหมูสับ', 'มาม่า รสต้มยำกุ้ง', 'ไวไว รสปรุงเด็ด', 'ยำยำ จัมโบ้ รสหมูสับ', 'ข้าวหอมมะลิ ตราฉัตร 5kg', 'ข้าวขาว แสนดี', 'น้ำปลา ทิพรส', 'น้ำปลา หยดทอง', 'ซอสหอยนางรม แม็กกี้', 'ซอสปรุงรส ภูเขาทอง', 'ซีอิ๊วขาว เด็กสมบูรณ์', 'น้ำส้มสายชู อสร.', 'น้ำตาลทราย มิตรผล 1kg', 'น้ำตาลทราย ลิน', 'เกลือปรุงทิพย์', 'ผงชูรส อายิโนะโมะโต๊ะ', 'รสดี รสหมู', 'คนอร์ ก้อน รสหมู', 'น้ำมันถั่วเหลือง องุ่น 1L', 'น้ำมันปาล์ม มรกต 1L', 'ปลากระป๋อง สามแม่ครัว', 'ปลากระป๋อง โรซ่า', 'ซอสพริก ศรีราชา', 'ซอสมะเขือเทศ ไฮนซ์', 'พริกไทยป่น ง่วนสูน'] }
                         ];
                         let batchData = [];
                         categories.forEach((cat, cIdx) => {
@@ -1557,8 +1602,9 @@
                                 let cost = Math.floor(price * (Math.random() * 0.4 + 0.4));
                                 batchData.push({
                                     barcode: cat.prefix + num + Math.floor(Math.random() * 9000 + 1000).toString(),
-                                    name: itemName, cost: cost, price: price,
-                                    stock: Math.floor(Math.random() * 200) + 10, isWeighed: false,
+                                    name: itemName, category: cat.catName, cost: cost, price: price,
+                                    stock: Math.floor(Math.random() * 20) + 1, // สุ่มให้สต็อกน้อยๆ เพื่อให้เห็นการจัดเรียง
+                                    isWeighed: false,
                                     image: `https://loremflickr.com/150/150/${cat.keyword}?lock=${cIdx * 100 + iIdx}`
                                 });
                             });
