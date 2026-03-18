@@ -1209,6 +1209,14 @@
 
             if (cash < total) {
                 Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: 'ระบุยอดเงินรับมาไม่เพียงพอ!', confirmButtonColor: '#14b8a6'});
+                return;
+            }
+
+            const change = cash - total;
+            closePaymentModal();
+            await finalizeSale('cash', total, cash, change);
+        };
+
         window.confirmQRPayment = async function() {
             const total = window.appState.currentTotal;
             closePaymentModal();
