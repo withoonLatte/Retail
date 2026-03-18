@@ -256,10 +256,13 @@
                         <p class="text-gray-500 text-sm">จัดการสต็อก, นำเข้า-นำออกสินค้า</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="showMockAlert('นำเข้า Excel', 'กำลังพัฒนาระบบนำเข้า/ส่งออกด้วย Excel')" class="bg-dark hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+                        <button onclick="forceSeedData()" class="bg-dark hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-magic"></i> สร้าง Demo
+                        </button>
+                        <button onclick="showMockAlert('นำเข้า Excel', 'กำลังพัฒนาระบบนำเข้า/ส่งออกด้วย Excel')" class="bg-success hover:bg-successhover text-white px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 shadow-sm">
                             <i class="fa-solid fa-file-excel"></i> Excel
                         </button>
-                        <button onclick="openProductModal()" class="bg-success hover:bg-successhover text-white px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 shadow-sm">
+                        <button onclick="openProductModal()" class="bg-primary hover:bg-primaryhover text-white px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 shadow-sm">
                             <i class="fa-solid fa-plus"></i> เพิ่มสินค้าใหม่
                         </button>
                     </div>
@@ -1115,46 +1118,61 @@
             });
         };
 
-        async function seedInitialDataIfEmpty() {
-            if(!window.appState.user) return;
+        // ฟังก์ชันสำหรับกดปุ่มสร้างข้อมูล Demo 100 รายการ
+        window.forceSeedData = async function() {
+            if(!window.appState.user) return Swal.fire('Error', 'รอเชื่อมต่อฐานข้อมูล', 'error');
             
-            try {
-                // เช็คจากฐานข้อมูลโดยตรงว่ามีสินค้าหรือยัง
-                const q = query(getColPath('products'), limit(1));
-                const querySnapshot = await getDocs(q);
-                
-                if(querySnapshot.empty) {
-                    Swal.fire({ title: 'กำลังสร้างข้อมูล Demo 100 รายการ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                    const categories = [
-                        { keyword: 'beverage', prefix: '885100', items: ['น้ำดื่มคริสตัล 600ml', 'น้ำดื่มสิงห์ 1500ml', 'เป๊ปซี่ 320ml', 'โค้ก กระป๋อง 325ml', 'สไปรท์ 1.25L', 'แฟนต้า น้ำแดง 1.25L', 'ช้าง โคลด์บรูว์ 620ml', 'สิงห์ เลมอนโซดา', 'โออิชิ กรีนที ต้นตำรับ', 'อิชิตัน รสน้ำผึ้งผสมมะนาว', 'ลิปตัน ไอซ์ที', 'น้ำแร่ ออรา 500ml', 'มิเนเร่ น้ำแร่ธรรมชาติ', 'เนสกาแฟ กระป๋อง เอสเปรสโซ่', 'เบอร์ดี้ โรบัสต้า', 'กระทิงแดง', 'เอ็ม-150', 'คาราบาวแดง', 'สปอนเซอร์ ออริจินัล', 'เกลือแร่ โพคารี่สเวท', 'น้ำผลไม้ ทิปโก้ ส้ม', 'มาลี น้ำแอปเปิ้ล', 'ดัชมิลล์ 4อิน1', 'นมเมจิ รสจืด 200ml', 'ไวตามิ้ลค์ ทูโก'] },
-                        { keyword: 'snack', prefix: '885200', items: ['เลย์ รสออริจินัล 50g', 'เลย์ รสโนริสาหร่าย 50g', 'เลย์ รสบาร์บีคิว', 'เทสโต รสปูผัดผงกะหรี่', 'พริงเกิลส์ ซาวครีม', 'ตะวัน รสหมึกย่าง', 'ซันไบทส์ รสบาร์บีคิว', 'โดริโทส รสนาโชชีส', 'ป๊อกกี้ สตรอเบอร์รี่', 'ป๊อกกี้ ช็อกโกแลต', 'เพรทซ์ รสลาบ', 'เพรทซ์ รสต้มยำกุ้ง', 'คอร์นพัฟฟ์', 'ฮานามิ ข้าวเกรียบกุ้ง', 'ปูไทย', 'คอนเน่', 'โปเต้', 'ปาปริก้า', 'ทาโร่ รสเข้มข้น', 'เบนโตะ รสทรงเครื่อง', 'สแน็คแจ๊ค', 'เถ้าแก่น้อย แผ่นคลาสสิค', 'มาม่าดิบ รสช็อกโกแลต', 'ช็อกโกแลต M&M', 'สนิกเกอร์ส'] },
-                        { keyword: 'soap', prefix: '885300', items: ['สบู่ นกแก้ว สีเขียว', 'สบู่ ลักส์ ซอฟท์ โรส', 'ครีมอาบน้ำ โชกุบุสซึ', 'ครีมอาบน้ำ บีไนซ์', 'แชมพู ซันซิล สีชมพู', 'แชมพู แพนทีน คลาสสิค', 'แชมพู เคลียร์ เมน', 'แชมพู เฮดแอนด์โชว์เดอร์', 'ยาสีฟัน คอลเกต 150g', 'ยาสีฟัน ดาร์ลี่', 'ยาสีฟัน เซนโซดายน์', 'แปรงสีฟัน ซิสเท็มมา', 'น้ำยาบ้วนปาก ลิสเตอรีน', 'โฟมล้างหน้า พอนด์ส', 'โฟมล้างหน้า การ์นิเย่', 'โฟม นีเวีย เมน', 'โรลออน เรโซนา', 'โรลออน นีเวีย', 'แป้งเย็น เภสัช', 'แป้ง โพรเทคส์', 'กระดาษทิชชู่ คลีเน็กซ์', 'สำลีแผ่น รถพยาบาล', 'ผ้าอนามัย ลอรีเอะ', 'ผ้าอนามัย โซฟี', 'มีดโกน ยิลเลตต์'] },
-                        { keyword: 'grocery', prefix: '885400', items: ['มาม่า รสหมูสับ', 'มาม่า รสต้มยำกุ้ง', 'ไวไว รสปรุงเด็ด', 'ยำยำ จัมโบ้ รสหมูสับ', 'ข้าวหอมมะลิ ตราฉัตร 5kg', 'ข้าวขาว แสนดี', 'น้ำปลา ทิพรส', 'น้ำปลา หยดทอง', 'ซอสหอยนางรม แม็กกี้', 'ซอสปรุงรส ภูเขาทอง', 'ซีอิ๊วขาว เด็กสมบูรณ์', 'น้ำส้มสายชู อสร.', 'น้ำตาลทราย มิตรผล 1kg', 'น้ำตาลทราย ลิน', 'เกลือปรุงทิพย์', 'ผงชูรส อายิโนะโมะโต๊ะ', 'รสดี รสหมู', 'คนอร์ ก้อน รสหมู', 'น้ำมันถั่วเหลือง องุ่น 1L', 'น้ำมันปาล์ม มรกต 1L', 'ปลากระป๋อง สามแม่ครัว', 'ปลากระป๋อง โรซ่า', 'ซอสพริก ศรีราชา', 'ซอสมะเขือเทศ ไฮนซ์', 'พริกไทยป่น ง่วนสูน'] }
-                    ];
+            Swal.fire({
+                title: 'สร้างข้อมูล Demo 100 รายการ?',
+                text: 'ระบบจะเพิ่มรายการสินค้าตัวอย่าง 100 รายการ (มีรูปภาพ) ลงในฐานข้อมูลของคุณ',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#14b8a6',
+                confirmButtonText: 'ยืนยันสร้างข้อมูล',
+                cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if(result.isConfirmed) {
+                    Swal.fire({ title: 'กำลังสร้างข้อมูล...', text: 'อาจใช้เวลาสักครู่ กรุณารอจนกว่าจะเสร็จ', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    
+                    try {
+                        const categories = [
+                            { keyword: 'beverage', prefix: '885100', items: ['น้ำดื่มคริสตัล 600ml', 'น้ำดื่มสิงห์ 1500ml', 'เป๊ปซี่ 320ml', 'โค้ก กระป๋อง 325ml', 'สไปรท์ 1.25L', 'แฟนต้า น้ำแดง 1.25L', 'ช้าง โคลด์บรูว์ 620ml', 'สิงห์ เลมอนโซดา', 'โออิชิ กรีนที ต้นตำรับ', 'อิชิตัน รสน้ำผึ้งผสมมะนาว', 'ลิปตัน ไอซ์ที', 'น้ำแร่ ออรา 500ml', 'มิเนเร่ น้ำแร่ธรรมชาติ', 'เนสกาแฟ กระป๋อง เอสเปรสโซ่', 'เบอร์ดี้ โรบัสต้า', 'กระทิงแดง', 'เอ็ม-150', 'คาราบาวแดง', 'สปอนเซอร์ ออริจินัล', 'เกลือแร่ โพคารี่สเวท', 'น้ำผลไม้ ทิปโก้ ส้ม', 'มาลี น้ำแอปเปิ้ล', 'ดัชมิลล์ 4อิน1', 'นมเมจิ รสจืด 200ml', 'ไวตามิ้ลค์ ทูโก'] },
+                            { keyword: 'snack', prefix: '885200', items: ['เลย์ รสออริจินัล 50g', 'เลย์ รสโนริสาหร่าย 50g', 'เลย์ รสบาร์บีคิว', 'เทสโต รสปูผัดผงกะหรี่', 'พริงเกิลส์ ซาวครีม', 'ตะวัน รสหมึกย่าง', 'ซันไบทส์ รสบาร์บีคิว', 'โดริโทส รสนาโชชีส', 'ป๊อกกี้ สตรอเบอร์รี่', 'ป๊อกกี้ ช็อกโกแลต', 'เพรทซ์ รสลาบ', 'เพรทซ์ รสต้มยำกุ้ง', 'คอร์นพัฟฟ์', 'ฮานามิ ข้าวเกรียบกุ้ง', 'ปูไทย', 'คอนเน่', 'โปเต้', 'ปาปริก้า', 'ทาโร่ รสเข้มข้น', 'เบนโตะ รสทรงเครื่อง', 'สแน็คแจ๊ค', 'เถ้าแก่น้อย แผ่นคลาสสิค', 'มาม่าดิบ รสช็อกโกแลต', 'ช็อกโกแลต M&M', 'สนิกเกอร์ส'] },
+                            { keyword: 'soap', prefix: '885300', items: ['สบู่ นกแก้ว สีเขียว', 'สบู่ ลักส์ ซอฟท์ โรส', 'ครีมอาบน้ำ โชกุบุสซึ', 'ครีมอาบน้ำ บีไนซ์', 'แชมพู ซันซิล สีชมพู', 'แชมพู แพนทีน คลาสสิค', 'แชมพู เคลียร์ เมน', 'แชมพู เฮดแอนด์โชว์เดอร์', 'ยาสีฟัน คอลเกต 150g', 'ยาสีฟัน ดาร์ลี่', 'ยาสีฟัน เซนโซดายน์', 'แปรงสีฟัน ซิสเท็มมา', 'น้ำยาบ้วนปาก ลิสเตอรีน', 'โฟมล้างหน้า พอนด์ส', 'โฟมล้างหน้า การ์นิเย่', 'โฟม นีเวีย เมน', 'โรลออน เรโซนา', 'โรลออน นีเวีย', 'แป้งเย็น เภสัช', 'แป้ง โพรเทคส์', 'กระดาษทิชชู่ คลีเน็กซ์', 'สำลีแผ่น รถพยาบาล', 'ผ้าอนามัย ลอรีเอะ', 'ผ้าอนามัย โซฟี', 'มีดโกน ยิลเลตต์'] },
+                            { keyword: 'grocery', prefix: '885400', items: ['มาม่า รสหมูสับ', 'มาม่า รสต้มยำกุ้ง', 'ไวไว รสปรุงเด็ด', 'ยำยำ จัมโบ้ รสหมูสับ', 'ข้าวหอมมะลิ ตราฉัตร 5kg', 'ข้าวขาว แสนดี', 'น้ำปลา ทิพรส', 'น้ำปลา หยดทอง', 'ซอสหอยนางรม แม็กกี้', 'ซอสปรุงรส ภูเขาทอง', 'ซีอิ๊วขาว เด็กสมบูรณ์', 'น้ำส้มสายชู อสร.', 'น้ำตาลทราย มิตรผล 1kg', 'น้ำตาลทราย ลิน', 'เกลือปรุงทิพย์', 'ผงชูรส อายิโนะโมะโต๊ะ', 'รสดี รสหมู', 'คนอร์ ก้อน รสหมู', 'น้ำมันถั่วเหลือง องุ่น 1L', 'น้ำมันปาล์ม มรกต 1L', 'ปลากระป๋อง สามแม่ครัว', 'ปลากระป๋อง โรซ่า', 'ซอสพริก ศรีราชา', 'ซอสมะเขือเทศ ไฮนซ์', 'พริกไทยป่น ง่วนสูน'] }
+                        ];
 
-                    let batchData = [];
-                    categories.forEach((cat, cIdx) => {
-                        cat.items.forEach((itemName, iIdx) => {
-                            let num = (iIdx + 1).toString().padStart(3, '0');
-                            batchData.push({
-                                barcode: cat.prefix + num + Math.floor(Math.random() * 9000 + 1000).toString(),
-                                name: itemName,
-                                price: Math.floor(Math.random() * 150) + 10,
-                                stock: Math.floor(Math.random() * 200) + 10,
-                                isWeighed: false,
-                                image: `https://loremflickr.com/150/150/${cat.keyword}?lock=${cIdx * 100 + iIdx}`
+                        let batchData = [];
+                        categories.forEach((cat, cIdx) => {
+                            cat.items.forEach((itemName, iIdx) => {
+                                let num = (iIdx + 1).toString().padStart(3, '0');
+                                batchData.push({
+                                    barcode: cat.prefix + num + Math.floor(Math.random() * 9000 + 1000).toString(),
+                                    name: itemName,
+                                    price: Math.floor(Math.random() * 150) + 10,
+                                    stock: Math.floor(Math.random() * 200) + 10,
+                                    isWeighed: false,
+                                    image: `https://loremflickr.com/150/150/${cat.keyword}?lock=${cIdx * 100 + iIdx}`
+                                });
                             });
                         });
-                    });
 
-                    for(const p of batchData) {
-                        await addDoc(getColPath('products'), { ...p, createdAt: Date.now() });
+                        // ใช้ Promise.all เพื่อเร่งความเร็วในการยิงข้อมูล 100 ชุดเข้า Database ให้ไวขึ้น
+                        const promises = batchData.map(p => addDoc(getColPath('products'), { ...p, createdAt: Date.now() }));
+                        await Promise.all(promises);
+                        
+                        Swal.fire({icon: 'success', title: 'สร้างข้อมูลสำเร็จ!', timer: 1500, showConfirmButton: false});
+                    } catch (error) {
+                        console.error("Error seeding data:", error);
+                        Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการสร้างข้อมูล', 'error');
                     }
-                    Swal.close();
                 }
-            } catch (error) {
-                console.error("Error seeding data:", error);
-            }
+            });
+        }
+
+        async function seedInitialDataIfEmpty() {
+            // ปิดฟังก์ชันเช็คออโต้ทิ้งไป เพื่อป้องกันการทำงานซ้ำซ้อน
+            // เปลี่ยนมาใช้ปุ่มกด (forceSeedData) ด้านบนแทน
         }
 
         window.showMockAlert = function(title, text) {
