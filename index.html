@@ -466,10 +466,17 @@
         const initFirebase = async () => {
             let firebaseConfig;
             try {
-                if (typeof __firebase_config !== 'undefined') {
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                     firebaseConfig = JSON.parse(__firebase_config);
                 } else {
-                    firebaseConfig = { projectId: "demo-pos-project" };
+                    firebaseConfig = {
+                        apiKey: "AIzaSyDDDhUcsZHK3DxIa_MQFnzdZzyu0qER7mc",
+                        authDomain: "retail-7e473.firebaseapp.com",
+                        projectId: "retail-7e473",
+                        storageBucket: "retail-7e473.firebasestorage.app",
+                        messagingSenderId: "98122433050",
+                        appId: "1:98122433050:web:090356028a634f594707a3"
+                    };
                 }
                 
                 const app = initializeApp(firebaseConfig);
