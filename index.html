@@ -278,7 +278,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="overflow-x-auto h-[50vh]">
+                    <div class="overflow-x-auto h-[700px]">
                         <table class="w-full text-left border-collapse relative">
                             <thead class="sticky top-0 z-10">
                                 <tr class="bg-dark text-white text-xs uppercase tracking-wider">
@@ -295,6 +295,9 @@
                                 <tr><td colspan="7" class="p-4 text-center text-gray-400">กำลังโหลดข้อมูล...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    <!-- Pagination Footer -->
+                    <div id="inventory-pagination" class="p-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white text-sm">
                     </div>
                 </div>
             </div>
@@ -800,6 +803,8 @@
             sales: [],
             customers: [], 
             categories: [], // State สำหรับเก็บหมวดหมู่
+            invCurrentPage: 1, // เพิ่มตัวแปรเก็บหน้าปัจจุบันของคลังสินค้า
+            invItemsPerPage: 75, // เพิ่มตัวแปรแสดงรายการ 75 รายการ/หน้า
             user: null,
             db: null,
             appId: typeof __app_id !== 'undefined' ? __app_id : 'pos-app-' + Math.floor(Math.random() * 1000)
@@ -1203,7 +1208,9 @@
         };
 
         // --- INVENTORY VIEW LOGIC ---
-        window.filterInventory = function() {
+        window.filterInventory = function(resetPage = true) {
+            if (resetPage) window.appState.invCurrentPage = 1;
+
             const query = document.getElementById('inv-search').value.toLowerCase();
             const category = document.getElementById('inv-category-filter').value;
 
@@ -1223,11 +1230,33 @@
             renderInventory(filtered);
         };
 
+        window.changeInvPage = function(newPage) {
+            window.appState.invCurrentPage = newPage;
+            window.filterInventory(false); // เปลี่ยนหน้าแต่ไม่รีเซ็ตหน้ากลับไป 1
+        };
+
         function renderInventory(products = window.appState.products) {
             const tbody = document.getElementById('inventory-table-body');
-            if(products.length === 0) return tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">ไม่พบสินค้า</td></tr>';
+            const paginationContainer = document.getElementById('inventory-pagination');
 
-            tbody.innerHTML = products.map(p => `
+            if(products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">ไม่พบสินค้า</td></tr>';
+                if(paginationContainer) paginationContainer.innerHTML = '';
+                return;
+            }
+
+            const totalItems = products.length;
+            const totalPages = Math.ceil(totalItems / window.appState.invItemsPerPage) || 1;
+            
+            // ตรวจสอบกันพลาดเผื่อหน้าเกิน
+            if (window.appState.invCurrentPage > totalPages) window.appState.invCurrentPage = totalPages;
+            if (window.appState.invCurrentPage < 1) window.appState.invCurrentPage = 1;
+
+            const startIndex = (window.appState.invCurrentPage - 1) * window.appState.invItemsPerPage;
+            const endIndex = startIndex + window.appState.invItemsPerPage;
+            const currentItems = products.slice(startIndex, endIndex);
+
+            tbody.innerHTML = currentItems.map(p => `
                 <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                     <td class="p-4">
                         <span class="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-600 block w-max">${p.barcode}</span>
@@ -1244,6 +1273,18 @@
                     </td>
                 </tr>
             `).join('');
+
+            // อัปเดตแถบ Pagination แบ่งหน้าด้านล่าง
+            if(paginationContainer) {
+                paginationContainer.innerHTML = `
+                    <span class="text-gray-600">แสดงรายการที่ <span class="font-bold">${startIndex + 1}</span> ถึง <span class="font-bold">${Math.min(endIndex, totalItems)}</span> จากทั้งหมด <span class="font-bold">${totalItems}</span> รายการ</span>
+                    <div class="flex gap-1">
+                        <button onclick="changeInvPage(${window.appState.invCurrentPage - 1})" class="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition text-gray-600" ${window.appState.invCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left text-[10px] mr-1"></i> ก่อนหน้า</button>
+                        <span class="px-3 py-1.5 bg-dark text-white rounded-md font-medium text-xs flex items-center justify-center min-w-[32px]">${window.appState.invCurrentPage}</span>
+                        <button onclick="changeInvPage(${window.appState.invCurrentPage + 1})" class="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition text-gray-600" ${window.appState.invCurrentPage === totalPages ? 'disabled' : ''}>ถัดไป <i class="fa-solid fa-chevron-right text-[10px] ml-1"></i></button>
+                    </div>
+                `;
+            }
         }
 
         // --- CRM (Customer Logic) ---
