@@ -391,21 +391,116 @@
         <!-- ================= VIEW: SETTINGS ================= -->
         <div id="view-settings" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-gray-100">
             <div class="max-w-6xl mx-auto">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="bg-success text-white px-6 py-4 font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-store"></i> การตั้งค่าระบบ
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Left Column: Store Settings -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-fit">
+                        <div class="px-6 py-4 font-bold flex items-center gap-2 border-b border-gray-100 text-gray-800">
+                            <i class="fa-solid fa-store text-success"></i> ตั้งค่าระบบ & ใบเสร็จ
                         </div>
                         <div class="p-6 space-y-5">
+                            
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <label class="block text-sm font-bold text-gray-800 mb-2"><i class="fa-solid fa-boxes-stacked text-primary mr-1"></i> ระบบจัดการสต็อก (Inventory)</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
+                                    <option>เปิดใช้งาน (หักสต็อกอัตโนมัติ)</option>
+                                    <option>ปิดใช้งาน</option>
+                                </select>
+                                <p class="text-[10px] text-gray-500 mt-2 leading-relaxed">* หากปิดใช้งาน ตอนชำระเงินและคืนเงินระบบจะไม่หัก/เพิ่มสต็อกสินค้าในคลัง</p>
+                            </div>
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อร้าน (แสดงบนใบเสร็จ)</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none" value="Smart POS Pro">
+                                <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none" value="Coffee Dezign POS">
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">โลโก้ร้าน (อัปโหลด หรือ ถ่ายรูป)</label>
+                                <input type="file" class="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ หรือ รหัสพร้อมเพย์ (รับเงิน)</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none" placeholder="เช่น 0812345678">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ขนาดกระดาษใบเสร็จ</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
+                                    <option>58mm (เครื่องพิมพ์ขนาดเล็ก)</option>
+                                    <option>80mm (เครื่องพิมพ์มาตรฐาน)</option>
+                                    <option>A4 (เครื่องพิมพ์ทั่วไป)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ข้อความท้ายใบเสร็จ (Footer)</label>
+                                <textarea rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none">ขอบคุณที่ใช้บริการ&#10;Thank You</textarea>
+                            </div>
+                            
                             <button onclick="showMockAlert('บันทึกสำเร็จ', 'บันทึกการตั้งค่าระบบเรียบร้อยแล้ว')" class="w-full bg-success hover:bg-successhover text-white font-medium py-3 rounded-md transition shadow-sm mt-2">
                                 บันทึกการตั้งค่าร้านค้า
                             </button>
                         </div>
                     </div>
+
+                    <!-- Right Column: Employee Settings -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-fit">
+                        <div class="px-6 py-4 font-bold flex items-center gap-2 border-b border-gray-100 text-gray-800">
+                            <i class="fa-solid fa-users-gear text-success"></i> จัดการพนักงาน (Staff / Members)
+                        </div>
+                        <div class="p-6 space-y-6">
+                            
+                            <!-- Staff List Table -->
+                            <div>
+                                <table class="w-full text-left text-sm">
+                                    <thead>
+                                        <tr class="border-b border-gray-200 text-gray-600">
+                                            <th class="pb-2 font-medium">ชื่อ (แสดงในบิล)</th>
+                                            <th class="pb-2 font-medium">Username</th>
+                                            <th class="pb-2 font-medium text-center">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b border-gray-100">
+                                            <td class="py-3 text-gray-800 font-medium">ผู้จัดการระบบ</td>
+                                            <td class="py-3 text-gray-500">admin</td>
+                                            <td class="py-3 text-center">
+                                                <button class="text-red-300 hover:text-red-500 transition" title="ลบไม่ได้ (แอดมินหลัก)"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Add New Staff Form -->
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <h4 class="font-bold text-sm text-gray-800 mb-3">เพิ่มพนักงานใหม่</h4>
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">ชื่อ-นามสกุล (แสดงในบิล)</label>
+                                        <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">สิทธิ์การใช้งาน</label>
+                                        <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
+                                            <option>พนักงานทั่วไป (Staff)</option>
+                                            <option>ผู้จัดการร้าน (Manager)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Username (ใช้ล็อกอิน)</label>
+                                        <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">รหัสผ่าน (Password)</label>
+                                        <input type="password" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
+                                    </div>
+                                </div>
+                                <button onclick="showMockAlert('เพิ่มพนักงาน', 'เพิ่มข้อมูลพนักงานเข้าระบบเรียบร้อย')" class="w-full bg-success hover:bg-successhover text-white font-medium py-2.5 rounded-md transition shadow-sm flex justify-center items-center gap-2 text-sm">
+                                    <i class="fa-solid fa-user-plus"></i> เพิ่มพนักงาน
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
