@@ -748,7 +748,7 @@
             db: null,
             appId: typeof __app_id !== 'undefined' ? __app_id : 'pos-app-' + Math.floor(Math.random() * 1000),
             
-            // เพิ่ม State สำหรับเก็บยอดต่างๆ ที่คำนวณไว้
+            // State สำหรับเก็บยอดต่างๆ ที่คำนวณไว้
             currentSubtotal: 0,
             currentDiscount: 0,
             currentVat: 0,
@@ -1079,7 +1079,7 @@
                 if (result.isConfirmed) {
                     window.appState.cart = [];
                     document.getElementById('discount-input').value = 0;
-                    document.getElementById('vat-toggle').checked = false; // Reset VAT toggle
+                    document.getElementById('vat-toggle').checked = false; 
                     updateCartUI();
                     barcodeInput.focus();
                     Swal.fire({icon: 'success', title: 'พักบิลสำเร็จ', timer: 1500, showConfirmButton: false});
@@ -1241,7 +1241,6 @@
                     phone: window.appState.currentCustomer.phone
                 } : null;
 
-                // Create document in Firebase พร้อมข้อมูลภาษีและส่วนลด
                 await addDoc(getColPath('sales'), { 
                     receiptNo, items, total, paymentMethod: method, timestamp, 
                     subtotal: window.appState.currentSubtotal,
@@ -1270,7 +1269,6 @@
                     }
                 }
 
-                // Prepare print preview data before clearing cart
                 if (isPrintChecked) {
                     generatePrintHTML(receiptNo, items, total, method, timestamp, window.appState.currentSubtotal, window.appState.currentDiscount, window.appState.currentVat);
                 }
@@ -1318,8 +1316,8 @@
                 const dateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
                 const timeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
                 
-                const staffName = 'Administrator'; // Mock, for future auth data map
-                const tableType = 'ซื้อกลับบ้าน'; // Default
+                const staffName = 'Administrator'; 
+                const tableType = 'ซื้อกลับบ้าน'; 
                 const isCancelled = s.status === 'cancelled';
                 
                 return `
@@ -1443,7 +1441,6 @@
         function renderRecentSales(sales) {
             const tbody = document.getElementById('recent-sales-table');
             if(!tbody || sales.length === 0) return;
-            // กรองเอาเฉพาะบิลที่ไม่ได้ถูกยกเลิกมาแสดงในหน้า Report สรุป
             const validSales = sales.filter(s => s.status !== 'cancelled').slice(0, 5);
             tbody.innerHTML = validSales.map(s => `
                 <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
