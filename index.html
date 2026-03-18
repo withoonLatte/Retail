@@ -61,8 +61,7 @@
                 position: absolute; 
                 left: 0; 
                 top: 0; 
-                width: 80mm; 
-                padding: 15px; 
+                width: 100%; 
                 font-family: 'Prompt', sans-serif; 
                 color: #000;
                 background: white;
@@ -1210,112 +1209,112 @@
 
             if (cash < total) {
                 Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: 'ระบุยอดเงินรับมาไม่เพียงพอ!', confirmButtonColor: '#14b8a6'});
-                return;
-            }
-
-            const change = cash - total;
+        window.confirmQRPayment = async function() {
+            const total = window.appState.currentTotal;
             closePaymentModal();
-            await finalizeSale('cash', total, cash, change);
+            await finalizeSale('qr', total, total, 0);
         };
 
-        // --- PRINT PREVIEW LOGIC (แบบใหม่ Thermal 80mm) ---
         window.generatePrintHTML = function(receiptNo, items, total, method, timestamp, subtotal, discount, vat, receivedAmount, changeAmount) {
             const dateObj = new Date(timestamp);
-            const dateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const timeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             const storeName = document.getElementById('setting-store-name')?.value || 'Coffee Dezign POS';
             
             let html = `
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <h2 style="font-size: 16px; font-weight: bold; margin:0;">${storeName}</h2>
-                    <p style="font-size: 12px; margin:2px 0;">ใบเสร็จรับเงิน / Receipt</p>
-                    <p style="font-size: 12px; margin:2px 0;">วันที่: ${dateStr}</p>
-                </div>
-                <div style="font-size: 12px; margin-bottom: 10px;">
-                    <p style="margin:2px 0; font-weight: bold;">บิล #: ${receiptNo.replace('REC', '')}</p>
-                    <p style="margin:2px 0;">พนักงาน: Administrator</p>
-                </div>
-                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
-                    <tbody>
+                <div style="width: 75mm; margin: 0 auto; padding: 10px; font-family: 'Prompt', sans-serif; color: #000; background: #fff;">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <h2 style="font-size: 16px; font-weight: bold; margin:0 0 5px 0;">${storeName}</h2>
+                        <p style="font-size: 11px; margin:2px 0; color: #333;">ใบเสร็จรับเงิน / Receipt</p>
+                        <p style="font-size: 11px; margin:2px 0; color: #333;">วันที่: ${dateStr} ${timeStr}</p>
+                    </div>
+                    <div style="font-size: 12px; margin-bottom: 10px;">
+                        <div style="display: flex; margin-bottom: 2px;">
+                            <span style="font-weight: bold; width: 55px;">บิล #:</span>
+                            <span style="font-weight: bold;">${receiptNo.replace('REC', '')}</span>
+                        </div>
+                        <div style="display: flex;">
+                            <span style="font-weight: bold; width: 55px;">พนักงาน:</span>
+                            <span>Administrator</span>
+                        </div>
+                    </div>
+                    <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+                    
+                    <div style="font-size: 12px;">
             `;
 
             items.forEach(item => {
                 html += `
-                    <tr>
-                        <td style="padding: 4px 0; vertical-align: top;">
-                            <div>${item.name}</div>
-                            <div style="color: #555; font-size: 11px;">x${item.qty}</div>
-                        </td>
-                        <td style="padding: 4px 0; text-align: right; vertical-align: top; font-weight: bold;">
-                            ${(item.price * item.qty).toLocaleString('th-TH', {minimumFractionDigits: 2})}
-                        </td>
-                    </tr>
+                        <div style="margin-bottom: 8px;">
+                            <div style="font-weight: bold;">${item.name}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2px;">
+                                <span style="font-size: 11px; color: #555;">x${item.qty}</span>
+                                <span style="font-weight: bold;">${(item.price * item.qty).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        </div>
                 `;
             });
 
             html += `
-                    </tbody>
-                </table>
-                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+                    </div>
+                    <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
             `;
 
             if (discount > 0 || vat > 0) {
                 html += `
-                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
-                    <tbody>
-                        <tr>
-                            <td style="padding: 2px 0;">รวมเป็นเงิน</td>
-                            <td style="text-align: right; padding: 2px 0;">${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                        </tr>
+                    <div style="font-size: 11px; color: #333;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <span>รวมเป็นเงิน</span>
+                            <span>${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
                 `;
                 if (discount > 0) {
                     html += `
-                        <tr>
-                            <td style="padding: 2px 0;">ส่วนลด</td>
-                            <td style="text-align: right; padding: 2px 0;">-${discount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                        </tr>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <span>ส่วนลด</span>
+                            <span>-${discount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
                     `;
                 }
                 if (vat > 0) {
                     html += `
-                        <tr>
-                            <td style="padding: 2px 0;">ภาษีมูลค่าเพิ่ม 7%</td>
-                            <td style="text-align: right; padding: 2px 0;">${vat.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                        </tr>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <span>ภาษีมูลค่าเพิ่ม 7%</span>
+                            <span>${vat.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
                     `;
                 }
                 html += `
-                    </tbody>
-                </table>
-                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+                    </div>
+                    <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
                 `;
             }
 
             html += `
-                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
-                    <tbody>
-                        <tr style="font-size: 14px; font-weight: bold;">
-                            <td style="padding: 2px 0;">ยอดรวมสุทธิ</td>
-                            <td style="text-align: right; padding: 2px 0;">฿${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 2px 0; color: #555;">ชำระโดย:</td>
-                            <td style="text-align: right; padding: 2px 0; color: #555;">${method === 'cash' ? 'เงินสด (Cash)' : 'โอนเงิน (Transfer)'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 2px 0; color: #555;">รับเงินมา:</td>
-                            <td style="text-align: right; padding: 2px 0; color: #555;">฿${(receivedAmount || total).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 2px 0; color: #555;">เงินทอน:</td>
-                            <td style="text-align: right; padding: 2px 0; color: #555;">฿${(changeAmount || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                <div style="text-align: center; font-size: 11px; color: #555; margin-top: 15px;">
-                    <p style="margin:2px 0;">ขอบคุณที่ใช้บริการ</p>
-                    <p style="margin:2px 0;">Thank You</p>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
+                        <span style="font-size: 14px; font-weight: bold;">ยอดรวมสุทธิ</span>
+                        <span style="font-size: 14px; font-weight: bold;">฿${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    
+                    <div style="font-size: 11px; color: #555; margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <span>ชำระโดย:</span>
+                            <span>${method === 'cash' ? 'เงินสด (Cash)' : 'โอนเงิน (Transfer)'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <span>รับเงินมา:</span>
+                            <span>฿${(receivedAmount || total).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <span>เงินทอน:</span>
+                            <span>฿${(changeAmount || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 10px; color: #555; margin-top: 25px;">
+                        <p style="margin:2px 0;">ขอบคุณที่ใช้บริการ</p>
+                        <p style="margin:2px 0;">Thank You</p>
+                    </div>
                 </div>
             `;
             document.getElementById('print-receipt').innerHTML = html;
