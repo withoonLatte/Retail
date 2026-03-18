@@ -220,27 +220,34 @@
                         </div>
                     </div>
 
-                    <div class="flex-grow p-5 flex flex-col justify-center space-y-6 bg-white">
+                    <div class="flex-grow p-5 flex flex-col justify-center space-y-4 bg-white">
                         <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-3">
                             <span class="text-gray-500 text-sm font-medium">จำนวนรายการ</span>
                             <span class="font-bold text-gray-800 text-lg" id="summary-count">0 <span class="text-sm font-normal">ชิ้น</span></span>
                         </div>
                         
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-500 text-sm font-medium">ยอดรวม (Subtotal)</span>
-                            <span class="font-bold text-gray-800 text-xl" id="summary-subtotal">0.00 ฿</span>
+                            <span class="text-gray-700 text-sm font-bold">รวมเป็นเงิน</span>
+                            <span class="font-bold text-gray-800 text-lg" id="summary-subtotal">0.00 ฿</span>
                         </div>
 
                         <div class="flex justify-between items-center">
-                            <span class="text-primary text-sm font-medium">ส่วนลดท้ายบิล</span>
+                            <span class="text-gray-600 text-sm font-medium">ส่วนลด</span>
                             <div class="flex items-center">
-                                <input type="number" id="discount-input" oninput="calculateTotals()" class="w-24 text-right border border-gray-300 rounded-l px-2 py-1 text-sm outline-none focus:border-success text-success font-bold" value="0">
-                                <span class="bg-gray-100 border border-l-0 border-gray-300 rounded-r px-3 py-1 text-sm text-gray-500 font-medium">฿</span>
+                                <input type="number" id="discount-input" oninput="calculateTotals()" class="w-24 text-right border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-success text-gray-800 font-medium" value="0">
                             </div>
                         </div>
 
-                        <div class="flex justify-between items-center border-t border-gray-200 pt-6 mt-4">
-                            <span class="text-xl font-bold text-dark">ยอดสุทธิ<br><span class="text-xs text-gray-400 font-normal">Net Total</span></span>
+                        <div class="flex justify-between items-center">
+                            <label class="flex items-center gap-2 cursor-pointer text-success font-bold text-sm select-none">
+                                <input type="checkbox" id="vat-toggle" onchange="calculateTotals()" class="rounded text-success focus:ring-success h-4 w-4 accent-success cursor-pointer">
+                                ภาษีมูลค่าเพิ่ม 7%
+                            </label>
+                            <span class="font-bold text-gray-800 text-sm" id="summary-vat">0.00 ฿</span>
+                        </div>
+
+                        <div class="flex justify-between items-center border-t border-gray-200 pt-5 mt-2">
+                            <span class="text-lg font-bold text-dark">ยอดชำระสุทธิ</span>
                             <span class="text-4xl lg:text-5xl font-bold text-success" id="summary-total">0.00</span>
                         </div>
                     </div>
@@ -739,7 +746,13 @@
             invItemsPerPage: 75, 
             user: null,
             db: null,
-            appId: typeof __app_id !== 'undefined' ? __app_id : 'pos-app-' + Math.floor(Math.random() * 1000)
+            appId: typeof __app_id !== 'undefined' ? __app_id : 'pos-app-' + Math.floor(Math.random() * 1000),
+            
+            // เพิ่ม State สำหรับเก็บยอดต่างๆ ที่คำนวณไว้
+            currentSubtotal: 0,
+            currentDiscount: 0,
+            currentVat: 0,
+            currentTotal: 0
         };
 
         window.toggleSidebar = function() {
@@ -835,7 +848,7 @@
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     sales.push({ id: doc.id, ...data });
-                    // ไม่รวมยอดบิลที่ถูกยกเลิก (Cancelled) ในรายรับวันนี้
+                    
                     if(new Date(data.timestamp).toDateString() === today && data.status !== 'cancelled') {
                         totalToday += data.total;
                         billsToday++;
@@ -1018,13 +1031,28 @@
             const subtotal = window.appState.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             const count = window.appState.cart.reduce((sum, item) => sum + item.qty, 0);
             const discount = parseFloat(document.getElementById('discount-input').value) || 0;
-            const total = Math.max(0, subtotal - discount);
+            
+            let afterDiscount = Math.max(0, subtotal - discount);
+            let vatAmount = 0;
+            
+            const isVatEnabled = document.getElementById('vat-toggle').checked;
+            if (isVatEnabled) {
+                vatAmount = afterDiscount * 0.07;
+            }
+
+            const total = afterDiscount + vatAmount;
 
             document.getElementById('summary-count').innerHTML = `${count} <span class="text-sm font-normal text-gray-500">ชิ้น</span>`;
             document.getElementById('summary-subtotal').innerText = `${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
+            document.getElementById('summary-vat').innerText = `${vatAmount.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
             document.getElementById('summary-total').innerText = `${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
             
             document.getElementById('payment-modal-total').innerHTML = `<span class="text-3xl">฿</span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            
+            // เก็บ State แยกแต่ละก้อนเพื่อบันทึกลง Database
+            window.appState.currentSubtotal = subtotal;
+            window.appState.currentDiscount = discount;
+            window.appState.currentVat = vatAmount;
             window.appState.currentTotal = total; 
         }
 
@@ -1036,6 +1064,7 @@
                 if (result.isConfirmed) {
                     window.appState.cart = [];
                     document.getElementById('discount-input').value = 0;
+                    document.getElementById('vat-toggle').checked = false; // Reset VAT toggle
                     updateCartUI();
                     barcodeInput.focus();
                 }
@@ -1050,6 +1079,7 @@
                 if (result.isConfirmed) {
                     window.appState.cart = [];
                     document.getElementById('discount-input').value = 0;
+                    document.getElementById('vat-toggle').checked = false; // Reset VAT toggle
                     updateCartUI();
                     barcodeInput.focus();
                     Swal.fire({icon: 'success', title: 'พักบิลสำเร็จ', timer: 1500, showConfirmButton: false});
@@ -1124,7 +1154,7 @@
             await finalizeSale('qr', total, total, 0);
         };
 
-        window.generatePrintHTML = function(receiptNo, items, total, method, timestamp) {
+        window.generatePrintHTML = function(receiptNo, items, total, method, timestamp, subtotal, discount, vat) {
             const dateStr = new Date(timestamp).toLocaleString('th-TH');
             const storeName = document.getElementById('setting-store-name')?.value || 'Coffee Dezign POS';
             let html = `
@@ -1150,6 +1180,35 @@
             html += `
                 </table>
                 <hr style="border-top: 1px dashed #000; margin: 10px 0;">
+            `;
+
+            if (discount > 0 || vat > 0) {
+                html += `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 5px;">
+                        <span>รวมเป็นเงิน</span>
+                        <span>${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                    </div>
+                `;
+                if (discount > 0) {
+                    html += `
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 2px;">
+                            <span>ส่วนลด</span>
+                            <span>-${discount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    `;
+                }
+                if (vat > 0) {
+                    html += `
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 2px;">
+                            <span>ภาษีมูลค่าเพิ่ม 7%</span>
+                            <span>${vat.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    `;
+                }
+                html += `<hr style="border-top: 1px dashed #000; margin: 5px 0;">`;
+            }
+
+            html += `
                 <div style="display: flex; justify-content: space-between; font-size: 1rem; font-weight: bold;">
                     <span>ยอดสุทธิ</span>
                     <span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
@@ -1182,9 +1241,12 @@
                     phone: window.appState.currentCustomer.phone
                 } : null;
 
-                // Create document in Firebase
+                // Create document in Firebase พร้อมข้อมูลภาษีและส่วนลด
                 await addDoc(getColPath('sales'), { 
                     receiptNo, items, total, paymentMethod: method, timestamp, 
+                    subtotal: window.appState.currentSubtotal,
+                    discount: window.appState.currentDiscount,
+                    vat: window.appState.currentVat,
                     status: 'success',
                     cashierId: window.appState.user.uid,
                     customer: customerData
@@ -1210,11 +1272,12 @@
 
                 // Prepare print preview data before clearing cart
                 if (isPrintChecked) {
-                    generatePrintHTML(receiptNo, items, total, method, timestamp);
+                    generatePrintHTML(receiptNo, items, total, method, timestamp, window.appState.currentSubtotal, window.appState.currentDiscount, window.appState.currentVat);
                 }
 
                 window.appState.cart = [];
                 document.getElementById('discount-input').value = 0;
+                document.getElementById('vat-toggle').checked = false; // Reset VAT
                 clearCustomerFromBill();
                 updateCartUI();
 
@@ -1284,7 +1347,7 @@
         window.printReceipt = function(saleId) {
             const sale = window.appState.sales.find(s => s.id === saleId);
             if(!sale) return;
-            generatePrintHTML(sale.receiptNo, sale.items, sale.total, sale.paymentMethod, sale.timestamp);
+            generatePrintHTML(sale.receiptNo, sale.items, sale.total, sale.paymentMethod, sale.timestamp, sale.subtotal || sale.total, sale.discount || 0, sale.vat || 0);
             setTimeout(() => { window.print(); }, 100);
         };
 
@@ -1299,13 +1362,40 @@
                 </div>
             `).join('');
 
+            let summaryHtml = '';
+            if (sale.discount > 0 || sale.vat > 0) {
+                summaryHtml += `
+                    <div class="flex justify-between text-sm mt-3 text-gray-600">
+                        <span>รวมเป็นเงิน:</span>
+                        <span>฿${(sale.subtotal || sale.total).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                    </div>
+                `;
+                if (sale.discount > 0) {
+                    summaryHtml += `
+                        <div class="flex justify-between text-sm mt-1 text-red-500">
+                            <span>ส่วนลด:</span>
+                            <span>-฿${(sale.discount).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    `;
+                }
+                if (sale.vat > 0) {
+                    summaryHtml += `
+                        <div class="flex justify-between text-sm mt-1 text-gray-600">
+                            <span>ภาษีมูลค่าเพิ่ม 7%:</span>
+                            <span>฿${(sale.vat).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    `;
+                }
+            }
+
             Swal.fire({
                 title: `บิล #${sale.receiptNo.replace('REC', '')}`,
                 html: `
                     <div class="text-left mt-2">
                         <p class="text-xs text-gray-500 mb-4">วันที่: ${new Date(sale.timestamp).toLocaleString('th-TH')}</p>
-                        <div class="max-h-48 overflow-y-auto mb-4 bg-gray-50 p-3 rounded border border-gray-100">${itemsHtml}</div>
-                        <div class="flex justify-between font-bold text-lg border-t border-gray-200 pt-3">
+                        <div class="max-h-48 overflow-y-auto mb-2 bg-gray-50 p-3 rounded border border-gray-100">${itemsHtml}</div>
+                        ${summaryHtml}
+                        <div class="flex justify-between font-bold text-lg border-t border-gray-200 pt-3 mt-3">
                             <span>ยอดสุทธิ:</span>
                             <span class="${sale.status === 'cancelled' ? 'text-red-500 line-through' : 'text-success'}">฿${sale.total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
                         </div>
