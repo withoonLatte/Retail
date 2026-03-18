@@ -735,6 +735,13 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // จำลอง ID หากไม่มี เพื่อไม่ให้สุ่มใหม่ตอนรีเฟรช
+        let localAppId = localStorage.getItem('smart_pos_app_id');
+        if (!localAppId) {
+            localAppId = 'pos-app-' + Date.now();
+            localStorage.setItem('smart_pos_app_id', localAppId);
+        }
+
         window.appState = {
             cart: [],
             currentCustomer: null,
@@ -746,7 +753,7 @@
             invItemsPerPage: 75, 
             user: null,
             db: null,
-            appId: typeof __app_id !== 'undefined' ? __app_id : 'pos-app-' + Math.floor(Math.random() * 1000),
+            appId: typeof __app_id !== 'undefined' ? __app_id : localAppId,
             
             // State สำหรับเก็บยอดต่างๆ ที่คำนวณไว้
             currentSubtotal: 0,
