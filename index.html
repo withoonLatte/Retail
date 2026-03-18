@@ -14,6 +14,9 @@
     <!-- FontAwesome (Icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Html5Qrcode (สำหรับสแกนด้วยกล้องมือถือ) -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <!-- Google Fonts (Prompt) -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -494,14 +497,22 @@
                 <h3 class="font-bold text-lg">เพิ่ม/แก้ไข สินค้า</h3>
                 <button onclick="closeProductModal()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <div class="p-6 space-y-4">
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">บาร์โค้ด <span class="text-red-500">*</span></label>
                     <div class="flex gap-2">
                         <input type="text" id="form-barcode" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
+                        <button onclick="startCameraScanner()" class="bg-dark hover:bg-gray-700 text-white px-3 rounded-lg text-sm transition" title="สแกนด้วยกล้องมือถือ"><i class="fa-solid fa-camera"></i></button>
                         <button onclick="document.getElementById('form-barcode').value = Math.floor(Math.random() * 8999999999999 + 1000000000000)" class="bg-gray-100 border border-gray-300 px-3 rounded-lg text-sm hover:bg-gray-200" title="สุ่มบาร์โค้ด EAN-13"><i class="fa-solid fa-shuffle"></i></button>
                     </div>
                 </div>
+                
+                <!-- Camera Scanner Container -->
+                <div id="camera-container" class="hidden relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-black">
+                    <div id="reader" width="100%"></div>
+                    <button onclick="stopCameraScanner()" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center z-10 hover:bg-red-600 shadow"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อสินค้า <span class="text-red-500">*</span></label>
                     <input type="text" id="form-name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
@@ -985,6 +996,8 @@
 
         // --- PRODUCT MANAGEMENT ---
         let currentEditId = null;
+        let html5QrCode = null; // ตัวแปรสำหรับกล้อง
+
         window.openProductModal = function() {
             currentEditId = null;
             document.getElementById('form-barcode').value = '';
@@ -999,10 +1012,54 @@
         };
 
         window.closeProductModal = function() {
+            stopCameraScanner(); // ปิดกล้องถ้าเปิดอยู่
             const modal = document.getElementById('modal-product');
             const content = document.getElementById('modal-product-content');
             content.classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        // ฟังก์ชันเปิดกล้องสแกนบาร์โค้ด
+        window.startCameraScanner = function() {
+            const cameraContainer = document.getElementById('camera-container');
+            cameraContainer.classList.remove('hidden');
+            
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            
+            html5QrCode.start(
+                { facingMode: "environment" }, // ใช้กล้องหลัง
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText, decodedResult) => {
+                    // เมื่อสแกนติด
+                    document.getElementById('form-barcode').value = decodedText;
+                    stopCameraScanner();
+                    
+                    // แจ้งเตือนเล็กๆ
+                    const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1500 });
+                    Toast.fire({ icon: 'success', title: 'สแกนสำเร็จ: ' + decodedText });
+                },
+                (errorMessage) => {
+                    // กำลังสแกนหา... ไม่ต้องทำอะไร
+                }
+            ).catch((err) => {
+                cameraContainer.classList.add('hidden');
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเข้าถึงกล้องได้ กรุณาตรวจสอบสิทธิ์การใช้งานกล้องในเบราว์เซอร์', 'error');
+            });
+        };
+
+        // ฟังก์ชันปิดกล้อง
+        window.stopCameraScanner = function() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('camera-container').classList.add('hidden');
+                }).catch((err) => {
+                    console.error("Failed to stop scanner", err);
+                });
+            } else {
+                document.getElementById('camera-container').classList.add('hidden');
+            }
         };
 
         window.editProduct = function(id) {
@@ -1059,8 +1116,14 @@
         };
 
         async function seedInitialDataIfEmpty() {
-            setTimeout(async () => {
-                if(window.appState.products.length === 0) {
+            if(!window.appState.user) return;
+            
+            try {
+                // เช็คจากฐานข้อมูลโดยตรงว่ามีสินค้าหรือยัง
+                const q = query(getColPath('products'), limit(1));
+                const querySnapshot = await getDocs(q);
+                
+                if(querySnapshot.empty) {
                     Swal.fire({ title: 'กำลังสร้างข้อมูล Demo 100 รายการ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                     const categories = [
                         { keyword: 'beverage', prefix: '885100', items: ['น้ำดื่มคริสตัล 600ml', 'น้ำดื่มสิงห์ 1500ml', 'เป๊ปซี่ 320ml', 'โค้ก กระป๋อง 325ml', 'สไปรท์ 1.25L', 'แฟนต้า น้ำแดง 1.25L', 'ช้าง โคลด์บรูว์ 620ml', 'สิงห์ เลมอนโซดา', 'โออิชิ กรีนที ต้นตำรับ', 'อิชิตัน รสน้ำผึ้งผสมมะนาว', 'ลิปตัน ไอซ์ที', 'น้ำแร่ ออรา 500ml', 'มิเนเร่ น้ำแร่ธรรมชาติ', 'เนสกาแฟ กระป๋อง เอสเปรสโซ่', 'เบอร์ดี้ โรบัสต้า', 'กระทิงแดง', 'เอ็ม-150', 'คาราบาวแดง', 'สปอนเซอร์ ออริจินัล', 'เกลือแร่ โพคารี่สเวท', 'น้ำผลไม้ ทิปโก้ ส้ม', 'มาลี น้ำแอปเปิ้ล', 'ดัชมิลล์ 4อิน1', 'นมเมจิ รสจืด 200ml', 'ไวตามิ้ลค์ ทูโก'] },
@@ -1089,7 +1152,9 @@
                     }
                     Swal.close();
                 }
-            }, 2000);
+            } catch (error) {
+                console.error("Error seeding data:", error);
+            }
         }
 
         window.showMockAlert = function(title, text) {
