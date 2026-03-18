@@ -49,10 +49,12 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* สไตล์สำหรับใบเสร็จจำลอง (80mm) */
+        /* สไตล์สำหรับใบเสร็จจำลอง (Thermal Receipt 80mm) */
         .receipt-print { display: none; }
         @media print {
+            @page { margin: 0; size: auto; }
             body * { visibility: hidden; }
+            body { background-color: #fff; margin: 0; padding: 0; }
             #print-receipt, #print-receipt * { visibility: visible; }
             #print-receipt { 
                 display: block;
@@ -60,7 +62,7 @@
                 left: 0; 
                 top: 0; 
                 width: 80mm; 
-                padding: 10px; 
+                padding: 15px; 
                 font-family: 'Prompt', sans-serif; 
                 color: #000;
                 background: white;
@@ -75,6 +77,13 @@
         .search-dropdown-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
         .search-dropdown-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
         .search-dropdown-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* ซ่อนลูกศรใน input type number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
     </style>
 </head>
 <body class="text-gray-800 h-screen flex flex-col">
@@ -468,7 +477,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">ขนาดกระดาษใบเสร็จ</label>
                                 <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
                                     <option>58mm (เครื่องพิมพ์ขนาดเล็ก)</option>
-                                    <option value="80">80mm (เครื่องพิมพ์มาตรฐาน)</option>
+                                    <option value="80" selected>80mm (เครื่องพิมพ์มาตรฐาน)</option>
                                     <option>A4 (เครื่องพิมพ์ทั่วไป)</option>
                                 </select>
                             </div>
@@ -512,7 +521,7 @@
     </main>
 
     <!-- Hidden Print Receipt Layout -->
-    <div id="print-receipt" class="receipt-print bg-white text-black p-4 text-sm mx-auto"></div>
+    <div id="print-receipt" class="receipt-print"></div>
 
     <!-- MODAL: SELECT CUSTOMER (FOR POS) -->
     <div id="modal-select-customer" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
@@ -533,9 +542,9 @@
         </div>
     </div>
 
-    <!-- Modal: Payment -->
+    <!-- Modal: Payment (แบบรับเงินสดใหม่) -->
     <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden transform scale-95 transition-transform duration-300" id="modal-payment-content">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden transform scale-95 transition-transform duration-300" id="modal-payment-content">
             <div class="px-6 py-4 bg-success text-white flex justify-between items-center">
                 <h3 class="font-bold text-lg">ยืนยันการรับชำระเงิน</h3>
                 <button onclick="closePaymentModal()" class="text-white hover:text-gray-200 text-xl transition"><i class="fa-solid fa-xmark"></i></button>
@@ -546,7 +555,7 @@
                     <span class="text-3xl">฿</span>0.00
                 </div>
 
-                <div class="w-full border border-gray-200 rounded-lg p-3 flex justify-between items-center mb-6 bg-gray-50">
+                <div class="w-full border border-gray-200 rounded-lg p-3 flex justify-between items-center mb-5 bg-gray-50">
                     <div class="flex items-center gap-3 text-gray-700 font-medium text-sm">
                         <i class="fa-solid fa-print text-gray-400"></i> พิมพ์ใบเสร็จ
                     </div>
@@ -556,24 +565,29 @@
                     </div>
                 </div>
 
-                <div class="w-full space-y-3" id="payment-actions">
-                    <button onclick="showQRSection()" class="w-full border-2 border-success text-success hover:bg-success hover:text-white font-bold py-3.5 rounded-lg transition flex items-center justify-center gap-2 text-lg">
-                        <i class="fa-solid fa-qrcode"></i> สร้าง QR พร้อมเพย์ให้ลูกค้า
-                    </button>
-                    <button onclick="payWithCash()" class="w-full bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 font-bold py-3.5 rounded-lg transition flex items-center justify-center gap-2 text-lg">
-                        <i class="fa-solid fa-coins"></i> รับเป็นเงินสด
-                    </button>
+                <!-- Cash Input Area -->
+                <div class="w-full bg-[#f0fdfa] rounded-xl p-4 border border-[#ccfbf1]">
+                    <label class="block text-success font-bold text-sm mb-2">ระบุยอดเงินที่รับมา</label>
+                    <input type="number" id="payment-cash-input" class="w-full border-2 border-success/40 rounded-lg px-4 py-3 text-3xl font-bold text-right text-gray-800 focus:outline-none focus:border-success focus:ring-1 focus:ring-success mb-3 transition" oninput="calculateChange()" autocomplete="off">
+                    
+                    <div class="grid grid-cols-4 gap-2 mb-4">
+                        <button onclick="addCashQuick('exact')" class="bg-white border border-success/30 text-success hover:bg-success hover:text-white rounded-md py-2 text-sm font-bold transition shadow-sm">พอดี</button>
+                        <button onclick="addCashQuick(100)" class="bg-white border border-success/30 text-success hover:bg-success hover:text-white rounded-md py-2 text-sm font-bold transition shadow-sm">+100</button>
+                        <button onclick="addCashQuick(500)" class="bg-white border border-success/30 text-success hover:bg-success hover:text-white rounded-md py-2 text-sm font-bold transition shadow-sm">+500</button>
+                        <button onclick="addCashQuick(1000)" class="bg-white border border-success/30 text-success hover:bg-success hover:text-white rounded-md py-2 text-sm font-bold transition shadow-sm">+1000</button>
+                    </div>
+
+                    <div class="flex justify-between items-center border-t border-success/30 pt-4">
+                        <span class="text-gray-600 font-medium">ทอนเงิน:</span>
+                        <span class="text-2xl font-bold text-success" id="payment-change-display">฿0.00</span>
+                    </div>
                 </div>
 
-                <div id="qr-section" class="w-full hidden flex-col items-center mt-2 animate-fadeIn">
-                    <p class="text-sm text-gray-500 mb-2">สแกนเพื่อชำระเงิน</p>
-                    <div class="bg-gray-100 p-2 rounded-lg border border-gray-200 mb-4">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=PromptPayMockupCode" alt="QR Code" class="w-40 h-40">
-                    </div>
-                    <button onclick="confirmQRPayment()" class="w-full bg-success hover:bg-successhover text-white font-bold py-3.5 rounded-lg transition flex items-center justify-center gap-2 text-lg shadow-md">
-                        <i class="fa-solid fa-check-circle"></i> ยืนยันการรับเงิน (QR)
+                <div class="w-full flex gap-3 mt-6">
+                    <button onclick="closePaymentModal()" class="flex-[1] bg-gray-100 border border-gray-300 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-lg transition">ย้อนกลับ</button>
+                    <button onclick="confirmCashPaymentUI()" class="flex-[2] bg-success hover:bg-successhover text-white font-bold py-3.5 rounded-lg transition flex items-center justify-center gap-2 shadow-md transform active:scale-95">
+                        <i class="fa-solid fa-check-circle"></i> ยืนยันรับเงิน
                     </button>
-                    <button onclick="resetPaymentModal()" class="w-full mt-3 text-sm text-gray-500 hover:text-gray-700 underline">กลับไปเลือกวิธีชำระอื่น</button>
                 </div>
             </div>
         </div>
@@ -751,6 +765,8 @@
             user: null,
             db: null,
             appId: typeof __app_id !== 'undefined' ? __app_id : localAppId,
+            
+            // State สำหรับเก็บยอดต่างๆ ที่คำนวณไว้
             currentSubtotal: 0,
             currentDiscount: 0,
             currentVat: 0,
@@ -775,6 +791,7 @@
         window.switchView = function(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById(`view-${viewName}`).classList.add('active');
+            
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if(btn.dataset.target === viewName) {
                     btn.classList.add('bg-primary', 'text-white');
@@ -860,6 +877,7 @@
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     sales.push({ id: doc.id, ...data });
+                    
                     if(new Date(data.timestamp).toDateString() === today && data.status !== 'cancelled') {
                         totalToday += data.total;
                         billsToday++;
@@ -1050,7 +1068,6 @@
             document.getElementById('summary-subtotal').innerText = `${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
             document.getElementById('summary-vat').innerText = `${vatAmount.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
             document.getElementById('summary-total').innerText = `${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
-            document.getElementById('payment-modal-total').innerHTML = `<span class="text-3xl">฿</span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
             
             window.appState.currentSubtotal = subtotal;
             window.appState.currentDiscount = discount;
@@ -1089,16 +1106,27 @@
             });
         };
 
-        // --- PAYMENT MODAL LOGIC ---
+        // --- PAYMENT MODAL LOGIC (แบบใหม่ตามรูป) ---
         window.openPaymentModal = function() {
             if(!window.appState.user) return Swal.fire('Error', 'กรุณารอระบบเชื่อมต่อฐานข้อมูล', 'error');
             if(window.appState.cart.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีสินค้าในตะกร้า', 'warning');
             
-            resetPaymentModal();
+            const total = window.appState.currentTotal;
+            document.getElementById('payment-modal-total').innerHTML = `<span class="text-3xl">฿</span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            
+            // ตั้งค่าเริ่มต้นช่องรับเงินให้เท่ากับยอดสุทธิ
+            const cashInput = document.getElementById('payment-cash-input');
+            cashInput.value = total;
+            calculateChange();
+            
             const modal = document.getElementById('modal-payment');
             const content = document.getElementById('modal-payment-content');
             modal.classList.remove('hidden');
-            setTimeout(() => content.classList.remove('scale-95'), 10);
+            setTimeout(() => {
+                content.classList.remove('scale-95');
+                cashInput.focus();
+                cashInput.select();
+            }, 10);
         };
 
         window.closePaymentModal = function() {
@@ -1109,120 +1137,149 @@
             barcodeInput.focus();
         };
 
-        window.showQRSection = function() {
-            document.getElementById('payment-actions').classList.add('hidden');
-            document.getElementById('qr-section').classList.remove('hidden');
-            document.getElementById('qr-section').classList.add('flex');
-        };
-
-        window.resetPaymentModal = function() {
-            document.getElementById('qr-section').classList.add('hidden');
-            document.getElementById('qr-section').classList.remove('flex');
-            document.getElementById('payment-actions').classList.remove('hidden');
-        };
-
-        window.payWithCash = async function() {
+        window.calculateChange = function() {
             const total = window.appState.currentTotal;
-            closePaymentModal(); 
-
-            setTimeout(async () => {
-                const { value: cashReceived } = await Swal.fire({
-                    title: 'รับเงินสด',
-                    html: `<h2 class="text-4xl font-bold text-success mb-4">${total.toLocaleString('th-TH', {minimumFractionDigits:2})} <span class="text-2xl">฿</span></h2>`,
-                    input: 'number',
-                    inputLabel: 'ใส่จำนวนเงินที่รับมาจากลูกค้า',
-                    inputValue: total,
-                    showCancelButton: true,
-                    confirmButtonText: 'รับชำระเงิน',
-                    confirmButtonColor: '#14b8a6', 
-                    cancelButtonText: 'ยกเลิก',
-                    inputValidator: (value) => {
-                        if (!value || value < total) return 'จำนวนเงินไม่พอ!';
-                    }
-                });
-
-                if (cashReceived) {
-                    const change = cashReceived - total;
-                    await finalizeSale('cash', total, cashReceived, change);
-                } else {
-                    openPaymentModal();
-                }
-            }, 300);
+            let cash = parseFloat(document.getElementById('payment-cash-input').value) || 0;
+            let change = cash - total;
+            const changeDisplay = document.getElementById('payment-change-display');
+            
+            if (change >= 0) {
+                changeDisplay.innerText = `฿${change.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+                changeDisplay.classList.remove('text-red-500');
+                changeDisplay.classList.add('text-success');
+            } else {
+                changeDisplay.innerText = `฿0.00`;
+                changeDisplay.classList.remove('text-success');
+                changeDisplay.classList.add('text-red-500');
+            }
         };
 
-        window.confirmQRPayment = async function() {
+        window.addCashQuick = function(val) {
             const total = window.appState.currentTotal;
+            const input = document.getElementById('payment-cash-input');
+            let currentCash = parseFloat(input.value) || 0;
+
+            if (val === 'exact') {
+                input.value = total;
+            } else {
+                input.value = currentCash + val;
+            }
+            calculateChange();
+            input.focus();
+        };
+
+        window.confirmCashPaymentUI = async function() {
+            const total = window.appState.currentTotal;
+            let cash = parseFloat(document.getElementById('payment-cash-input').value) || 0;
+
+            if (cash < total) {
+                Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: 'ระบุยอดเงินรับมาไม่เพียงพอ!', confirmButtonColor: '#14b8a6'});
+                return;
+            }
+
+            const change = cash - total;
             closePaymentModal();
-            await finalizeSale('qr', total, total, 0);
+            await finalizeSale('cash', total, cash, change);
         };
 
-        window.generatePrintHTML = function(receiptNo, items, total, method, timestamp, subtotal, discount, vat) {
-            const dateStr = new Date(timestamp).toLocaleString('th-TH');
+        // --- PRINT PREVIEW LOGIC (แบบใหม่ Thermal 80mm) ---
+        window.generatePrintHTML = function(receiptNo, items, total, method, timestamp, subtotal, discount, vat, receivedAmount, changeAmount) {
+            const dateObj = new Date(timestamp);
+            const dateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             const storeName = document.getElementById('setting-store-name')?.value || 'Coffee Dezign POS';
+            
             let html = `
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <h2 style="font-size: 1.2rem; font-weight: bold; margin:0;">${storeName}</h2>
-                    <p style="font-size: 0.8rem; margin:0;">ใบเสร็จรับเงิน / ย่อ</p>
-                    <p style="font-size: 0.8rem; margin:0;">เลขที่: ${receiptNo.replace('REC', '')}</p>
-                    <p style="font-size: 0.8rem; margin:0;">${dateStr}</p>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <h2 style="font-size: 16px; font-weight: bold; margin:0;">${storeName}</h2>
+                    <p style="font-size: 12px; margin:2px 0;">ใบเสร็จรับเงิน / Receipt</p>
+                    <p style="font-size: 12px; margin:2px 0;">วันที่: ${dateStr}</p>
                 </div>
-                <hr style="border-top: 1px dashed #000; margin: 10px 0;">
-                <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                <div style="font-size: 12px; margin-bottom: 10px;">
+                    <p style="margin:2px 0; font-weight: bold;">บิล #: ${receiptNo.replace('REC', '')}</p>
+                    <p style="margin:2px 0;">พนักงาน: Administrator</p>
+                </div>
+                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                    <tbody>
             `;
 
             items.forEach(item => {
                 html += `
                     <tr>
-                        <td style="padding: 2px 0;">${item.name} <br><small>x${item.qty} @${item.price}</small></td>
-                        <td style="text-align: right; vertical-align: top; padding: 2px 0;">${(item.price * item.qty).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 4px 0; vertical-align: top;">
+                            <div>${item.name}</div>
+                            <div style="color: #555; font-size: 11px;">x${item.qty}</div>
+                        </td>
+                        <td style="padding: 4px 0; text-align: right; vertical-align: top; font-weight: bold;">
+                            ${(item.price * item.qty).toLocaleString('th-TH', {minimumFractionDigits: 2})}
+                        </td>
                     </tr>
                 `;
             });
 
             html += `
+                    </tbody>
                 </table>
-                <hr style="border-top: 1px dashed #000; margin: 10px 0;">
+                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
             `;
 
             if (discount > 0 || vat > 0) {
                 html += `
-                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 5px;">
-                        <span>รวมเป็นเงิน</span>
-                        <span>${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
-                    </div>
+                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                    <tbody>
+                        <tr>
+                            <td style="padding: 2px 0;">รวมเป็นเงิน</td>
+                            <td style="text-align: right; padding: 2px 0;">${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        </tr>
                 `;
                 if (discount > 0) {
                     html += `
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 2px;">
-                            <span>ส่วนลด</span>
-                            <span>-${discount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
-                        </div>
+                        <tr>
+                            <td style="padding: 2px 0;">ส่วนลด</td>
+                            <td style="text-align: right; padding: 2px 0;">-${discount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        </tr>
                     `;
                 }
                 if (vat > 0) {
                     html += `
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 2px;">
-                            <span>ภาษีมูลค่าเพิ่ม 7%</span>
-                            <span>${vat.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
-                        </div>
+                        <tr>
+                            <td style="padding: 2px 0;">ภาษีมูลค่าเพิ่ม 7%</td>
+                            <td style="text-align: right; padding: 2px 0;">${vat.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        </tr>
                     `;
                 }
-                html += `<hr style="border-top: 1px dashed #000; margin: 5px 0;">`;
+                html += `
+                    </tbody>
+                </table>
+                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+                `;
             }
 
             html += `
-                <div style="display: flex; justify-content: space-between; font-size: 1rem; font-weight: bold;">
-                    <span>ยอดสุทธิ</span>
-                    <span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 5px;">
-                    <span>วิธีชำระเงิน</span>
-                    <span>${method === 'cash' ? 'เงินสด' : 'QR Code'}</span>
-                </div>
-                <hr style="border-top: 1px dashed #000; margin: 10px 0;">
-                <div style="text-align: center; font-size: 0.8rem;">
-                    <p>ขอบคุณที่ใช้บริการ</p>
-                    <p>Thank You</p>
+                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                    <tbody>
+                        <tr style="font-size: 14px; font-weight: bold;">
+                            <td style="padding: 2px 0;">ยอดรวมสุทธิ</td>
+                            <td style="text-align: right; padding: 2px 0;">฿${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0; color: #555;">ชำระโดย:</td>
+                            <td style="text-align: right; padding: 2px 0; color: #555;">${method === 'cash' ? 'เงินสด (Cash)' : 'โอนเงิน (Transfer)'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0; color: #555;">รับเงินมา:</td>
+                            <td style="text-align: right; padding: 2px 0; color: #555;">฿${(receivedAmount || total).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0; color: #555;">เงินทอน:</td>
+                            <td style="text-align: right; padding: 2px 0; color: #555;">฿${(changeAmount || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
+                <div style="text-align: center; font-size: 11px; color: #555; margin-top: 15px;">
+                    <p style="margin:2px 0;">ขอบคุณที่ใช้บริการ</p>
+                    <p style="margin:2px 0;">Thank You</p>
                 </div>
             `;
             document.getElementById('print-receipt').innerHTML = html;
@@ -1248,6 +1305,8 @@
                     subtotal: window.appState.currentSubtotal,
                     discount: window.appState.currentDiscount,
                     vat: window.appState.currentVat,
+                    receivedAmount: received || total,
+                    changeAmount: change || 0,
                     status: 'success',
                     cashierId: window.appState.user.uid,
                     customer: customerData
@@ -1272,7 +1331,7 @@
                 }
 
                 if (isPrintChecked) {
-                    generatePrintHTML(receiptNo, items, total, method, timestamp, window.appState.currentSubtotal, window.appState.currentDiscount, window.appState.currentVat);
+                    generatePrintHTML(receiptNo, items, total, method, timestamp, window.appState.currentSubtotal, window.appState.currentDiscount, window.appState.currentVat, received || total, change || 0);
                 }
 
                 window.appState.cart = [];
@@ -1347,7 +1406,7 @@
         window.printReceipt = function(saleId) {
             const sale = window.appState.sales.find(s => s.id === saleId);
             if(!sale) return;
-            generatePrintHTML(sale.receiptNo, sale.items, sale.total, sale.paymentMethod, sale.timestamp, sale.subtotal || sale.total, sale.discount || 0, sale.vat || 0);
+            generatePrintHTML(sale.receiptNo, sale.items, sale.total, sale.paymentMethod, sale.timestamp, sale.subtotal || sale.total, sale.discount || 0, sale.vat || 0, sale.receivedAmount || sale.total, sale.changeAmount || 0);
             setTimeout(() => { window.print(); }, 100);
         };
 
@@ -1981,165 +2040,6 @@
                 `;
             }
         }
-
-        // --- PRODUCT MANAGEMENT ---
-        window.openProductModal = function() {
-            currentEditId = null;
-            document.getElementById('form-barcode').value = '';
-            document.getElementById('form-name').value = '';
-            
-            const firstCat = document.getElementById('form-category').options[0];
-            if(firstCat) document.getElementById('form-category').value = firstCat.value;
-            
-            document.getElementById('form-cost').value = '';
-            document.getElementById('form-price').value = '';
-            document.getElementById('form-stock').value = '';
-            document.getElementById('form-isWeighed').checked = false;
-            document.getElementById('form-image-input').value = '';
-            document.getElementById('form-image-base64').value = '';
-            document.getElementById('form-image-preview').src = '';
-            document.getElementById('form-image-preview').classList.add('hidden');
-            document.getElementById('form-image-icon').classList.remove('hidden');
-            
-            const modal = document.getElementById('modal-product');
-            const content = document.getElementById('modal-product-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => content.classList.remove('scale-95'), 10);
-        };
-
-        window.closeProductModal = function() {
-            stopCameraScanner(); 
-            const modal = document.getElementById('modal-product');
-            const content = document.getElementById('modal-product-content');
-            content.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        };
-
-        window.startCameraScanner = function() {
-            const cameraContainer = document.getElementById('camera-container');
-            cameraContainer.classList.remove('hidden');
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                (decodedText, decodedResult) => {
-                    document.getElementById('form-barcode').value = decodedText;
-                    stopCameraScanner();
-                    Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1500 }).fire({ icon: 'success', title: 'สแกนสำเร็จ: ' + decodedText });
-                },
-                (errorMessage) => {}
-            ).catch((err) => {
-                cameraContainer.classList.add('hidden');
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเข้าถึงกล้องได้ กรุณาตรวจสอบสิทธิ์', 'error');
-            });
-        };
-
-        window.stopCameraScanner = function() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => document.getElementById('camera-container').classList.add('hidden'));
-            } else document.getElementById('camera-container').classList.add('hidden');
-        };
-
-        window.handleProductImageUpload = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_SIZE = 300; 
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } 
-                    else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                    
-                    document.getElementById('form-image-preview').src = dataUrl;
-                    document.getElementById('form-image-preview').classList.remove('hidden');
-                    document.getElementById('form-image-icon').classList.add('hidden');
-                    document.getElementById('form-image-base64').value = dataUrl;
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        };
-
-        window.editProduct = function(id) {
-            const product = window.appState.products.find(p => p.id === id);
-            if(!product) return;
-            
-            // ล้างฟอร์มให้สะอาดก่อนดึงข้อมูลใส่
-            openProductModal();
-            
-            // รอให้ modal เปิดและเตรียมตัวแปรให้เรียบร้อย ค่อยใส่ข้อมูล
-            setTimeout(() => {
-                currentEditId = id;
-                document.getElementById('form-barcode').value = product.barcode;
-                document.getElementById('form-name').value = product.name;
-                document.getElementById('form-category').value = product.category || 'อื่นๆ';
-                document.getElementById('form-cost').value = product.cost || 0;
-                document.getElementById('form-price').value = product.price;
-                document.getElementById('form-stock').value = product.stock;
-                document.getElementById('form-isWeighed').checked = product.isWeighed || false;
-                
-                if (product.image) {
-                    document.getElementById('form-image-base64').value = product.image;
-                    document.getElementById('form-image-preview').src = product.image;
-                    document.getElementById('form-image-preview').classList.remove('hidden');
-                    document.getElementById('form-image-icon').classList.add('hidden');
-                }
-            }, 50);
-        };
-
-        window.saveProduct = async function() {
-            if(!window.appState.user) return;
-            const barcode = document.getElementById('form-barcode').value.trim();
-            const name = document.getElementById('form-name').value.trim();
-            const category = document.getElementById('form-category').value;
-            const cost = parseFloat(document.getElementById('form-cost').value) || 0;
-            const price = parseFloat(document.getElementById('form-price').value);
-            const stock = parseInt(document.getElementById('form-stock').value) || 0;
-            const isWeighed = document.getElementById('form-isWeighed').checked;
-            const image = document.getElementById('form-image-base64').value;
-
-            if(!barcode || !name || isNaN(price)) {
-                return Swal.fire('แจ้งเตือน', 'กรุณากรอกบาร์โค้ด, ชื่อสินค้า และราคาขายให้ถูกต้อง', 'warning');
-            }
-            
-            const productData = { barcode, name, category, cost, price, stock, isWeighed, image, updatedAt: Date.now() };
-
-            try {
-                if(currentEditId) {
-                    await updateDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'products', currentEditId), productData);
-                    Swal.fire({icon: 'success', title: 'อัปเดตสำเร็จ', timer: 1500, showConfirmButton: false});
-                } else {
-                    if(window.appState.products.some(p => p.barcode === barcode)) {
-                        return Swal.fire('แจ้งเตือน', 'บาร์โค้ดนี้มีในระบบแล้ว', 'error');
-                    }
-                    await addDoc(getColPath('products'), { ...productData, createdAt: Date.now() });
-                    Swal.fire({icon: 'success', title: 'เพิ่มสินค้าสำเร็จ', timer: 1500, showConfirmButton: false});
-                }
-                closeProductModal();
-            } catch (e) {
-                console.error("Save Error:", e);
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
-            }
-        };
-
-        window.deleteProduct = function(id) {
-            Swal.fire({
-                title: 'ลบสินค้านี้?', text: "ลบแล้วจะไม่สามารถกู้คืนได้!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#e07a5f', confirmButtonText: 'ลบข้อมูล', cancelButtonText: 'ยกเลิก'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    await deleteDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'products', id));
-                    Swal.fire({icon: 'success', title: 'ลบสำเร็จ', timer: 1500, showConfirmButton: false});
-                }
-            });
-        };
 
         window.forceSeedData = async function() {
             if(!window.appState.user) return Swal.fire('Error', 'รอเชื่อมต่อฐานข้อมูล', 'error');
