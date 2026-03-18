@@ -48,17 +48,29 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* สไตล์สำหรับใบเสร็จจำลอง (80mm) */
         .receipt-print { display: none; }
         @media print {
             body * { visibility: hidden; }
-            .receipt-print, .receipt-print * { visibility: visible; }
-            .receipt-print { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; font-family: monospace; }
+            #print-receipt, #print-receipt * { visibility: visible; }
+            #print-receipt { 
+                display: block;
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 80mm; 
+                padding: 10px; 
+                font-family: 'Prompt', sans-serif; 
+                color: #000;
+                background: white;
+            }
             .no-print { display: none !important; }
         }
+        
         .toggle-checkbox:checked { right: 0; border-color: #14b8a6; }
         .toggle-checkbox:checked + .toggle-label { background-color: #14b8a6; }
         
-        /* สไตล์ Scrollbar สำหรับ Dropdown ค้นหา */
         .search-dropdown-scroll::-webkit-scrollbar { width: 6px; }
         .search-dropdown-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
         .search-dropdown-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
@@ -141,16 +153,12 @@
                 <div class="w-full md:w-[66%] flex flex-col bg-white rounded-lg shadow-sm overflow-hidden border border-gray-300 h-[65vh] md:h-full min-w-0">
                     
                     <div class="bg-white p-3 border-b border-gray-200 flex gap-2 items-center shadow-sm z-20 relative">
-                        <!-- Wrapper สำหรับช่องค้นหาและ Dropdown -->
                         <div id="pos-search-wrapper" class="flex-grow relative">
                             <div class="flex items-center bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus-within:border-success focus-within:ring-1 focus-within:ring-success transition">
                                 <i class="fa-solid fa-barcode text-gray-400 mr-2 text-lg"></i>
                                 <input type="text" id="barcode-input" oninput="handlePosSearchInput()" class="w-full bg-transparent focus:outline-none text-gray-700 placeholder-gray-400" placeholder="สแกนบาร์โค้ด หรือ พิมพ์ชื่อสินค้าค้นหา..." autocomplete="off">
                             </div>
-                            
-                            <!-- Dropdown Autocomplete สำหรับผลลัพธ์การค้นหา -->
                             <div id="pos-search-dropdown" class="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 hidden max-h-80 overflow-y-auto search-dropdown-scroll top-full left-0">
-                                <!-- รายการจะถูกสร้างด้วย JS -->
                             </div>
                         </div>
                         
@@ -285,11 +293,6 @@
                         <div class="flex gap-2">
                             <select id="inv-category-filter" onchange="filterInventory()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-success focus:border-success bg-white text-gray-700">
                                 <option value="All">ทุกหมวดหมู่</option>
-                                <option value="เครื่องดื่ม">เครื่องดื่ม</option>
-                                <option value="ขนมสแน็ค">ขนมสแน็ค</option>
-                                <option value="ของใช้">ของใช้</option>
-                                <option value="วัตถุดิบ">วัตถุดิบ</option>
-                                <option value="อื่นๆ">อื่นๆ</option>
                             </select>
                         </div>
                     </div>
@@ -311,7 +314,6 @@
                             </tbody>
                         </table>
                     </div>
-                    <!-- Pagination Footer -->
                     <div id="inventory-pagination" class="p-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white text-sm">
                     </div>
                 </div>
@@ -358,35 +360,36 @@
             </div>
         </div>
 
-        <!-- ================= VIEW: DOCUMENTS (ระบบเอกสาร) ================= -->
-        <div id="view-documents" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-lightbg">
+        <!-- ================= VIEW: DOCUMENTS (ประวัติใบเสร็จรับเงิน) ================= -->
+        <div id="view-documents" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-gray-100">
             <div class="max-w-6xl mx-auto">
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h2 class="text-2xl font-bold text-dark">ระบบเอกสารการขาย</h2>
+                        <h2 class="text-2xl font-bold text-dark">ตรวจสอบใบเสร็จรับเงิน</h2>
                         <p class="text-gray-500 text-sm">ประวัติการขาย, บิลใบเสร็จ, ใบกำกับภาษี</p>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="p-4 border-b border-gray-100 flex gap-4 bg-gray-50/50 text-sm">
-                        <button class="bg-dark text-white px-4 py-2 rounded font-medium shadow-sm">บิลขายทั้งหมด</button>
-                        <button class="bg-white text-gray-600 border border-gray-300 px-4 py-2 rounded font-medium hover:bg-gray-50">ใบกำกับภาษี</button>
+                    <div class="bg-success text-white px-6 py-4 font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-file-invoice"></i> ประวัติใบเสร็จรับเงิน
                     </div>
-                    <div class="overflow-x-auto h-[50vh]">
-                        <table class="w-full text-left border-collapse relative">
-                            <thead class="sticky top-0 z-10">
-                                <tr class="bg-dark text-white text-xs uppercase tracking-wider">
+                    <div class="overflow-x-auto h-[60vh]">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
+                                <tr class="text-gray-600">
+                                    <th class="p-4 font-medium">บิล #</th>
                                     <th class="p-4 font-medium">วันที่ / เวลา</th>
-                                    <th class="p-4 font-medium">เลขที่บิล (Receipt No)</th>
-                                    <th class="p-4 font-medium">ลูกค้า</th>
-                                    <th class="p-4 font-medium text-center">วิธีชำระ</th>
+                                    <th class="p-4 font-medium text-center">พนักงาน (Staff)</th>
+                                    <th class="p-4 font-medium text-center">โต๊ะ</th>
                                     <th class="p-4 font-medium text-right">ยอดรวม</th>
-                                    <th class="p-4 font-medium text-center">รายละเอียด</th>
+                                    <th class="p-4 font-medium text-center">ช่องทางชำระ</th>
+                                    <th class="p-4 font-medium text-center">สถานะ</th>
+                                    <th class="p-4 font-medium text-center">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="documents-table-body" class="text-sm text-gray-700 bg-white">
-                                <tr><td colspan="6" class="p-4 text-center text-gray-400">กำลังโหลดข้อมูล...</td></tr>
+                            <tbody id="documents-table-body" class="text-gray-700 bg-white">
+                                <tr><td colspan="8" class="p-4 text-center text-gray-400">กำลังโหลดข้อมูล...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -400,11 +403,11 @@
                 <h2 class="text-2xl font-bold text-dark mb-6">รายงานยอดขาย Real-Time</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-success relative overflow-hidden">
-                        <p class="text-sm text-gray-500 font-medium">ยอดขายวันนี้</p>
+                        <p class="text-sm text-gray-500 font-medium">ยอดขายวันนี้ (สำเร็จ)</p>
                         <h3 class="text-3xl font-bold text-dark mt-2" id="report-today-sales">0.00 ฿</h3>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-primary relative overflow-hidden">
-                        <p class="text-sm text-gray-500 font-medium">จำนวนบิลวันนี้</p>
+                        <p class="text-sm text-gray-500 font-medium">จำนวนบิลวันนี้ (สำเร็จ)</p>
                         <h3 class="text-3xl font-bold text-dark mt-2" id="report-today-bills">0</h3>
                     </div>
                 </div>
@@ -433,14 +436,12 @@
         <div id="view-settings" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-gray-100">
             <div class="max-w-6xl mx-auto">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
                     <!-- Left Column: Store Settings -->
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-fit">
                         <div class="px-6 py-4 font-bold flex items-center gap-2 border-b border-gray-100 text-gray-800">
                             <i class="fa-solid fa-store text-success"></i> ตั้งค่าระบบ & ใบเสร็จ
                         </div>
                         <div class="p-6 space-y-5">
-                            
                             <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
                                 <label class="block text-sm font-bold text-gray-800 mb-2"><i class="fa-solid fa-boxes-stacked text-primary mr-1"></i> ระบบจัดการสต็อก (Inventory)</label>
                                 <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
@@ -449,14 +450,9 @@
                                 </select>
                                 <p class="text-[10px] text-gray-500 mt-2 leading-relaxed">* หากปิดใช้งาน ตอนชำระเงินและคืนเงินระบบจะไม่หัก/เพิ่มสต็อกสินค้าในคลัง</p>
                             </div>
-
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อร้าน (แสดงบนใบเสร็จ)</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none" value="Coffee Dezign POS">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">โลโก้ร้าน (อัปโหลด หรือ ถ่ายรูป)</label>
-                                <input type="file" class="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 bg-white">
+                                <input type="text" id="setting-store-name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none" value="Coffee Dezign POS">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ หรือ รหัสพร้อมเพย์ (รับเงิน)</label>
@@ -466,15 +462,10 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">ขนาดกระดาษใบเสร็จ</label>
                                 <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
                                     <option>58mm (เครื่องพิมพ์ขนาดเล็ก)</option>
-                                    <option>80mm (เครื่องพิมพ์มาตรฐาน)</option>
+                                    <option value="80">80mm (เครื่องพิมพ์มาตรฐาน)</option>
                                     <option>A4 (เครื่องพิมพ์ทั่วไป)</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">ข้อความท้ายใบเสร็จ (Footer)</label>
-                                <textarea rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none">ขอบคุณที่ใช้บริการ&#10;Thank You</textarea>
-                            </div>
-                            
                             <button onclick="showMockAlert('บันทึกสำเร็จ', 'บันทึกการตั้งค่าระบบเรียบร้อยแล้ว')" class="w-full bg-success hover:bg-successhover text-white font-medium py-3 rounded-md transition shadow-sm mt-2">
                                 บันทึกการตั้งค่าร้านค้า
                             </button>
@@ -487,8 +478,6 @@
                             <i class="fa-solid fa-users-gear text-success"></i> จัดการพนักงาน (Staff / Members)
                         </div>
                         <div class="p-6 space-y-6">
-                            
-                            <!-- Staff List Table -->
                             <div>
                                 <table class="w-full text-left text-sm">
                                     <thead>
@@ -500,7 +489,7 @@
                                     </thead>
                                     <tbody>
                                         <tr class="border-b border-gray-100">
-                                            <td class="py-3 text-gray-800 font-medium">ผู้จัดการระบบ</td>
+                                            <td class="py-3 text-gray-800 font-medium">Administrator</td>
                                             <td class="py-3 text-gray-500">admin</td>
                                             <td class="py-3 text-center">
                                                 <button class="text-red-300 hover:text-red-500 transition" title="ลบไม่ได้ (แอดมินหลัก)"><i class="fa-solid fa-trash"></i></button>
@@ -509,82 +498,16 @@
                                     </tbody>
                                 </table>
                             </div>
-
-                            <!-- Add New Staff Form -->
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                                <h4 class="font-bold text-sm text-gray-800 mb-3">เพิ่มพนักงานใหม่</h4>
-                                <div class="grid grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">ชื่อ-นามสกุล (แสดงในบิล)</label>
-                                        <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">สิทธิ์การใช้งาน</label>
-                                        <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
-                                            <option>พนักงานทั่วไป (Staff)</option>
-                                            <option>ผู้จัดการร้าน (Manager)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">Username (ใช้ล็อกอิน)</label>
-                                        <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">รหัสผ่าน (Password)</label>
-                                        <input type="password" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-success focus:border-success outline-none bg-white">
-                                    </div>
-                                </div>
-                                <button onclick="showMockAlert('เพิ่มพนักงาน', 'เพิ่มข้อมูลพนักงานเข้าระบบเรียบร้อย')" class="w-full bg-success hover:bg-successhover text-white font-medium py-2.5 rounded-md transition shadow-sm flex justify-center items-center gap-2 text-sm">
-                                    <i class="fa-solid fa-user-plus"></i> เพิ่มพนักงาน
-                                </button>
-                            </div>
-
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
 
     </main>
 
-    <!-- MODAL: ADD/EDIT CUSTOMER (CRM) -->
-    <div id="modal-customer" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300" id="modal-customer-content">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-dark text-white">
-                <h3 class="font-bold text-lg">เพิ่ม/แก้ไข สมาชิก</h3>
-                <button onclick="closeCustomerModal()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ (รหัสสมาชิก) <span class="text-red-500">*</span></label>
-                    <input type="text" id="cust-phone" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
-                    <input type="text" id="cust-name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ระดับสมาชิก</label>
-                        <select id="cust-level" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none bg-white">
-                            <option value="Member">Member (ทั่วไป)</option>
-                            <option value="Silver">Silver</option>
-                            <option value="Gold">Gold</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">แต้มสะสม</label>
-                        <input type="number" id="cust-points" value="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
-                    </div>
-                </div>
-            </div>
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
-                <button onclick="closeCustomerModal()" class="px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium transition">ยกเลิก</button>
-                <button onclick="saveCustomer()" class="px-4 py-2 bg-success hover:bg-successhover text-white rounded-lg text-sm font-medium shadow-sm transition">บันทึกข้อมูล</button>
-            </div>
-        </div>
-    </div>
+    <!-- Hidden Print Receipt Layout -->
+    <div id="print-receipt" class="receipt-print bg-white text-black p-4 text-sm mx-auto"></div>
 
     <!-- MODAL: SELECT CUSTOMER (FOR POS) -->
     <div id="modal-select-customer" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
@@ -713,9 +636,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">เลือกไอคอน (Icon)</label>
-                    <div class="grid grid-cols-5 gap-2" id="icon-selector-grid">
-                        <!-- Rendered via JS -->
-                    </div>
+                    <div class="grid grid-cols-5 gap-2" id="icon-selector-grid"></div>
                     <input type="hidden" id="cat-form-icon" value="fa-tag">
                 </div>
             </div>
@@ -773,10 +694,6 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
                     <select id="form-category" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none bg-white">
                         <option value="เครื่องดื่ม">เครื่องดื่ม</option>
-                        <option value="ขนมสแน็ค">ขนมสแน็ค</option>
-                        <option value="ของใช้">ของใช้</option>
-                        <option value="วัตถุดิบ">วัตถุดิบ</option>
-                        <option value="อื่นๆ">อื่นๆ</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -893,18 +810,14 @@
         const setupRealtimeListeners = () => {
             if(!window.appState.user) return;
 
-            // ฟังหมวดหมู่
             onSnapshot(getColPath('categories'), (snapshot) => {
                 const categories = [];
                 snapshot.forEach(doc => categories.push({ id: doc.id, ...doc.data() }));
                 window.appState.categories = categories;
                 updateCategoryDropdowns();
-                if(!document.getElementById('modal-category-manage').classList.contains('hidden')) {
-                    renderCategoryList();
-                }
+                if(!document.getElementById('modal-category-manage').classList.contains('hidden')) renderCategoryList();
             });
 
-            // ฟังสินค้า
             onSnapshot(getColPath('products'), (snapshot) => {
                 const products = [];
                 snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
@@ -913,16 +826,20 @@
                 renderSearchModalGrid();
             });
 
-            // ฟังยอดขาย & เอกสาร
             onSnapshot(getColPath('sales'), (snapshot) => {
                 const sales = [];
                 let totalToday = 0;
+                let billsToday = 0;
                 const today = new Date().toDateString();
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     sales.push({ id: doc.id, ...data });
-                    if(new Date(data.timestamp).toDateString() === today) totalToday += data.total;
+                    // ไม่รวมยอดบิลที่ถูกยกเลิก (Cancelled) ในรายรับวันนี้
+                    if(new Date(data.timestamp).toDateString() === today && data.status !== 'cancelled') {
+                        totalToday += data.total;
+                        billsToday++;
+                    }
                 });
                 
                 sales.sort((a,b) => b.timestamp - a.timestamp);
@@ -931,13 +848,12 @@
                 const reportTodaySales = document.getElementById('report-today-sales');
                 if (reportTodaySales) reportTodaySales.innerText = `${totalToday.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
                 const reportTodayBills = document.getElementById('report-today-bills');
-                if (reportTodayBills) reportTodayBills.innerText = sales.filter(s => new Date(s.timestamp).toDateString() === today).length;
+                if (reportTodayBills) reportTodayBills.innerText = billsToday;
                 
                 renderRecentSales(sales.slice(0, 5));
                 renderDocuments(sales); 
             });
 
-            // ฟังลูกค้า CRM
             onSnapshot(getColPath('customers'), (snapshot) => {
                 const customers = [];
                 snapshot.forEach(doc => customers.push({ id: doc.id, ...doc.data() }));
@@ -958,7 +874,6 @@
             }
         });
 
-        // Hide dropdown when clicking outside
         document.addEventListener('click', (e) => {
             const dropdown = document.getElementById('pos-search-dropdown');
             if (dropdown && !e.target.closest('#pos-search-wrapper')) {
@@ -966,7 +881,6 @@
             }
         });
 
-        // Autocomplete search on main POS input
         window.handlePosSearchInput = function() {
             const query = document.getElementById('barcode-input').value.toLowerCase().trim();
             const dropdown = document.getElementById('pos-search-dropdown');
@@ -1014,13 +928,9 @@
 
         function processBarcode(code) {
             if(!code) return;
-            // เน้นการหาบาร์โค้ดเป๊ะๆ ก่อน (สำหรับเครื่องสแกนบาร์โค้ดจะได้ทำงานไวและไม่ผิดพลาด)
             let product = window.appState.products.find(p => p.barcode === code);
             
-            // ถ้าไม่เจอบาร์โค้ดเป๊ะๆ ลองหาจากชื่อ
-            if(!product) {
-                product = window.appState.products.find(p => p.name.toLowerCase().includes(code.toLowerCase()));
-            }
+            if(!product) product = window.appState.products.find(p => p.name.toLowerCase().includes(code.toLowerCase()));
 
             if(product) {
                 if(product.stock <= 0 && !product.isWeighed) {
@@ -1214,6 +1124,49 @@
             await finalizeSale('qr', total, total, 0);
         };
 
+        window.generatePrintHTML = function(receiptNo, items, total, method, timestamp) {
+            const dateStr = new Date(timestamp).toLocaleString('th-TH');
+            const storeName = document.getElementById('setting-store-name')?.value || 'Coffee Dezign POS';
+            let html = `
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <h2 style="font-size: 1.2rem; font-weight: bold; margin:0;">${storeName}</h2>
+                    <p style="font-size: 0.8rem; margin:0;">ใบเสร็จรับเงิน / ย่อ</p>
+                    <p style="font-size: 0.8rem; margin:0;">เลขที่: ${receiptNo.replace('REC', '')}</p>
+                    <p style="font-size: 0.8rem; margin:0;">${dateStr}</p>
+                </div>
+                <hr style="border-top: 1px dashed #000; margin: 10px 0;">
+                <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+            `;
+
+            items.forEach(item => {
+                html += `
+                    <tr>
+                        <td style="padding: 2px 0;">${item.name} <br><small>x${item.qty} @${item.price}</small></td>
+                        <td style="text-align: right; vertical-align: top; padding: 2px 0;">${(item.price * item.qty).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                </table>
+                <hr style="border-top: 1px dashed #000; margin: 10px 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 1rem; font-weight: bold;">
+                    <span>ยอดสุทธิ</span>
+                    <span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 5px;">
+                    <span>วิธีชำระเงิน</span>
+                    <span>${method === 'cash' ? 'เงินสด' : 'QR Code'}</span>
+                </div>
+                <hr style="border-top: 1px dashed #000; margin: 10px 0;">
+                <div style="text-align: center; font-size: 0.8rem;">
+                    <p>ขอบคุณที่ใช้บริการ</p>
+                    <p>Thank You</p>
+                </div>
+            `;
+            document.getElementById('print-receipt').innerHTML = html;
+        };
+
         async function finalizeSale(method, total, received, change) {
             Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             
@@ -1229,8 +1182,10 @@
                     phone: window.appState.currentCustomer.phone
                 } : null;
 
+                // Create document in Firebase
                 await addDoc(getColPath('sales'), { 
                     receiptNo, items, total, paymentMethod: method, timestamp, 
+                    status: 'success',
                     cashierId: window.appState.user.uid,
                     customer: customerData
                 });
@@ -1253,6 +1208,11 @@
                     }
                 }
 
+                // Prepare print preview data before clearing cart
+                if (isPrintChecked) {
+                    generatePrintHTML(receiptNo, items, total, method, timestamp);
+                }
+
                 window.appState.cart = [];
                 document.getElementById('discount-input').value = 0;
                 clearCustomerFromBill();
@@ -1272,15 +1232,310 @@
                     title: 'ชำระเงินเสร็จสิ้น!',
                     html: htmlMsg,
                     icon: 'success',
-                    timer: isPrintChecked ? 4000 : 3000,
+                    timer: isPrintChecked ? 2000 : 3000,
                     showConfirmButton: false
-                }).then(() => barcodeInput.focus());
+                }).then(() => {
+                    if (isPrintChecked) window.print();
+                    barcodeInput.focus();
+                });
 
             } catch (error) {
                 console.error("Sale Error:", error);
                 Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกรายการได้', 'error');
             }
         }
+
+        // --- DOCUMENTS (เอกสารการขาย & ปริ้น) ---
+        function renderDocuments(sales = window.appState.sales) {
+            const tbody = document.getElementById('documents-table-body');
+            if(!tbody || sales.length === 0) return tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-400">ยังไม่มีประวัติเอกสาร</td></tr>';
+            
+            tbody.innerHTML = sales.map(s => {
+                const dateObj = new Date(s.timestamp);
+                const dateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                const timeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                
+                const staffName = 'Administrator'; // Mock, for future auth data map
+                const tableType = 'ซื้อกลับบ้าน'; // Default
+                const isCancelled = s.status === 'cancelled';
+                
+                return `
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition ${isCancelled ? 'opacity-50 bg-red-50/20' : ''}">
+                    <td class="p-4 font-mono font-bold text-gray-800">#${s.receiptNo.replace('REC', '')}</td>
+                    <td class="p-4 text-gray-600 text-xs sm:text-sm">${dateStr} ${timeStr}</td>
+                    <td class="p-4 text-center text-gray-600">${staffName}</td>
+                    <td class="p-4 text-center text-gray-600">${tableType}</td>
+                    <td class="p-4 text-right font-bold ${isCancelled ? 'text-gray-400 line-through' : 'text-success'}">฿${s.total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td class="p-4 text-center text-gray-600">${s.paymentMethod === 'cash' ? 'เงินสด' : (s.paymentMethod === 'qr' ? 'โอนเงิน' : '-')}</td>
+                    <td class="p-4 text-center">
+                        ${isCancelled 
+                            ? `<span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold border border-red-200 whitespace-nowrap">ยกเลิก</span>` 
+                            : `<span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold border border-green-200 whitespace-nowrap">สำเร็จ</span>`}
+                    </td>
+                    <td class="p-4 text-center flex justify-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
+                        <button onclick="viewReceipt('${s.id}')" class="text-blue-500 hover:text-blue-700 transition" title="ดูรายละเอียด"><i class="fa-solid fa-magnifying-glass text-sm"></i></button>
+                        <button onclick="printReceipt('${s.id}')" class="text-gray-600 hover:text-dark transition whitespace-nowrap"><i class="fa-solid fa-print"></i> ปริ้น</button>
+                        ${!isCancelled ? `<button onclick="voidReceipt('${s.id}')" class="text-red-400 hover:text-red-600 transition whitespace-nowrap"><i class="fa-solid fa-ban"></i> ยกเลิก</button>` : `<span class="w-[52px]"></span>`}
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        window.printReceipt = function(saleId) {
+            const sale = window.appState.sales.find(s => s.id === saleId);
+            if(!sale) return;
+            generatePrintHTML(sale.receiptNo, sale.items, sale.total, sale.paymentMethod, sale.timestamp);
+            setTimeout(() => { window.print(); }, 100);
+        };
+
+        window.viewReceipt = function(saleId) {
+            const sale = window.appState.sales.find(s => s.id === saleId);
+            if(!sale) return;
+            
+            let itemsHtml = sale.items.map(item => `
+                <div class="flex justify-between text-sm py-1.5 border-b border-gray-100 last:border-0">
+                    <span class="text-gray-700">${item.name} <span class="text-xs text-gray-400 ml-1">x${item.qty}</span></span>
+                    <span class="font-medium">฿${(item.price * item.qty).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                </div>
+            `).join('');
+
+            Swal.fire({
+                title: `บิล #${sale.receiptNo.replace('REC', '')}`,
+                html: `
+                    <div class="text-left mt-2">
+                        <p class="text-xs text-gray-500 mb-4">วันที่: ${new Date(sale.timestamp).toLocaleString('th-TH')}</p>
+                        <div class="max-h-48 overflow-y-auto mb-4 bg-gray-50 p-3 rounded border border-gray-100">${itemsHtml}</div>
+                        <div class="flex justify-between font-bold text-lg border-t border-gray-200 pt-3">
+                            <span>ยอดสุทธิ:</span>
+                            <span class="${sale.status === 'cancelled' ? 'text-red-500 line-through' : 'text-success'}">฿${sale.total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        </div>
+                        <div class="flex justify-between text-sm mt-2 text-gray-600">
+                            <span>ช่องทางชำระ:</span>
+                            <span>${sale.paymentMethod === 'cash' ? 'เงินสด' : 'QR Code'}</span>
+                        </div>
+                        ${sale.status === 'cancelled' ? '<div class="mt-4 text-center text-red-500 font-bold text-sm bg-red-50 py-2 rounded">บิลนี้ถูกยกเลิกแล้ว</div>' : ''}
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-print"></i> พิมพ์บิล',
+                confirmButtonColor: '#3d405b',
+                cancelButtonText: 'ปิด',
+                cancelButtonColor: '#9ca3af'
+            }).then((result) => {
+                if(result.isConfirmed) printReceipt(saleId);
+            });
+        };
+
+        window.voidReceipt = function(saleId) {
+            Swal.fire({
+                title: 'ยกเลิกบิลนี้?',
+                text: 'การยกเลิกบิลจะไม่สามารถกู้คืนได้ และยอดจะไม่ถูกนำไปคำนวณในรายงานประจำวัน',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'ยืนยันยกเลิก',
+                cancelButtonText: 'ปิด'
+            }).then(async (result) => {
+                if(result.isConfirmed) {
+                    try {
+                        await updateDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'sales', saleId), {
+                            status: 'cancelled',
+                            updatedAt: Date.now()
+                        });
+                        Swal.fire({icon: 'success', title: 'ยกเลิกบิลเรียบร้อยแล้ว', timer: 1500, showConfirmButton: false});
+                    } catch(e) {
+                        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถยกเลิกบิลได้', 'error');
+                    }
+                }
+            });
+        };
+
+        function renderRecentSales(sales) {
+            const tbody = document.getElementById('recent-sales-table');
+            if(!tbody || sales.length === 0) return;
+            // กรองเอาเฉพาะบิลที่ไม่ได้ถูกยกเลิกมาแสดงในหน้า Report สรุป
+            const validSales = sales.filter(s => s.status !== 'cancelled').slice(0, 5);
+            tbody.innerHTML = validSales.map(s => `
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                    <td class="p-3 text-gray-500">${new Date(s.timestamp).toLocaleTimeString('th-TH')}</td>
+                    <td class="p-3 font-mono text-xs text-gray-600">#${s.receiptNo.replace('REC', '')}</td>
+                    <td class="p-3"><span class="${s.paymentMethod === 'cash' ? 'text-success bg-green-50' : 'text-blue-600 bg-blue-50'} px-2 py-1 rounded text-xs font-medium">${s.paymentMethod === 'cash' ? 'เงินสด' : 'QR Code'}</span></td>
+                    <td class="p-3 text-right font-bold">฿${s.total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- CRM (Customer Logic) ---
+        window.openCustomerModal = function() {
+            currentEditCustId = null;
+            document.getElementById('cust-phone').value = '';
+            document.getElementById('cust-name').value = '';
+            document.getElementById('cust-level').value = 'Member';
+            document.getElementById('cust-points').value = '0';
+            
+            const modal = document.getElementById('modal-customer');
+            const content = document.getElementById('modal-customer-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.remove('scale-95'), 10);
+        };
+
+        window.closeCustomerModal = function() {
+            const modal = document.getElementById('modal-customer');
+            const content = document.getElementById('modal-customer-content');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.saveCustomer = async function() {
+            if(!window.appState.user) return;
+            const phone = document.getElementById('cust-phone').value.trim();
+            const name = document.getElementById('cust-name').value.trim();
+            const level = document.getElementById('cust-level').value;
+            const points = parseInt(document.getElementById('cust-points').value) || 0;
+
+            if(!phone || !name) return Swal.fire('แจ้งเตือน', 'กรุณากรอกเบอร์โทรและชื่อ', 'warning');
+            
+            const custData = { phone, name, level, points, updatedAt: Date.now() };
+
+            try {
+                if(currentEditCustId) {
+                    await updateDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'customers', currentEditCustId), custData);
+                    Swal.fire({icon: 'success', title: 'อัปเดตสมาชิกสำเร็จ', timer: 1500, showConfirmButton: false});
+                } else {
+                    if(window.appState.customers.some(c => c.phone === phone)) {
+                        return Swal.fire('แจ้งเตือน', 'เบอร์โทรศัพท์นี้เป็นสมาชิกอยู่แล้ว', 'error');
+                    }
+                    await addDoc(getColPath('customers'), { ...custData, createdAt: Date.now() });
+                    Swal.fire({icon: 'success', title: 'เพิ่มสมาชิกสำเร็จ', timer: 1500, showConfirmButton: false});
+                }
+                closeCustomerModal();
+            } catch (e) {
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+            }
+        };
+
+        window.editCustomer = function(id) {
+            const cust = window.appState.customers.find(c => c.id === id);
+            if(!cust) return;
+            currentEditCustId = id;
+            document.getElementById('cust-phone').value = cust.phone;
+            document.getElementById('cust-name').value = cust.name;
+            document.getElementById('cust-level').value = cust.level || 'Member';
+            document.getElementById('cust-points').value = cust.points || 0;
+            
+            const modal = document.getElementById('modal-customer');
+            const content = document.getElementById('modal-customer-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.remove('scale-95'), 10);
+        };
+
+        window.deleteCustomer = function(id) {
+            Swal.fire({
+                title: 'ลบข้อมูลสมาชิก?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e07a5f', confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await deleteDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'customers', id));
+                    Swal.fire({icon: 'success', title: 'ลบสำเร็จ', timer: 1500, showConfirmButton: false});
+                }
+            });
+        };
+
+        function renderCustomers(query = '') {
+            const tbody = document.getElementById('crm-table-body');
+            let customers = window.appState.customers;
+            
+            if(query) {
+                query = query.toLowerCase();
+                customers = customers.filter(c => c.name.toLowerCase().includes(query) || c.phone.includes(query));
+            }
+
+            if(customers.length === 0) return tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">ไม่พบข้อมูลสมาชิก</td></tr>';
+
+            tbody.innerHTML = customers.map(c => `
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                    <td class="p-4 font-mono text-primary font-medium">${c.phone}</td>
+                    <td class="p-4 font-bold text-gray-800">${c.name}</td>
+                    <td class="p-4 text-center">
+                        <span class="${c.level === 'Gold' ? 'bg-yellow-100 text-yellow-700' : c.level === 'Silver' ? 'bg-gray-200 text-gray-700' : 'bg-blue-50 text-blue-600'} px-2 py-1 rounded-full text-xs font-bold">${c.level || 'Member'}</span>
+                    </td>
+                    <td class="p-4 text-right font-bold text-success">${(c.points || 0).toLocaleString()}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="editCustomer('${c.id}')" class="text-blue-500 hover:bg-blue-50 w-8 h-8 rounded transition mr-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteCustomer('${c.id}')" class="text-red-500 hover:bg-red-50 w-8 h-8 rounded transition"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- POS Customer Selection ---
+        window.openSelectCustomerModal = function() {
+            const modal = document.getElementById('modal-select-customer');
+            const content = document.getElementById('modal-select-customer-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.remove('scale-95'), 10);
+            renderSelectCustomerList();
+            document.getElementById('search-select-cust').value = '';
+            document.getElementById('search-select-cust').focus();
+        };
+
+        window.closeSelectCustomerModal = function() {
+            const modal = document.getElementById('modal-select-customer');
+            const content = document.getElementById('modal-select-customer-content');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.renderSelectCustomerList = function(query = '') {
+            const ul = document.getElementById('select-customer-list');
+            let customers = window.appState.customers;
+            
+            if(query) {
+                query = query.toLowerCase();
+                customers = customers.filter(c => c.name.toLowerCase().includes(query) || c.phone.includes(query));
+            }
+
+            if(customers.length === 0) return ul.innerHTML = '<li class="p-4 text-center text-gray-400">ไม่พบลูกค้านี้ในระบบ</li>';
+
+            ul.innerHTML = customers.map(c => `
+                <li onclick='selectCustomerForBill(${JSON.stringify(c).replace(/'/g, "&#39;")})' class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:border-success transition flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-gray-800">${c.name} <span class="text-xs font-normal text-gray-500 ml-2">${c.phone}</span></p>
+                        <p class="text-xs text-gray-500 mt-1">ระดับ: ${c.level || 'Member'} | แต้มสะสม: <span class="font-bold text-success">${c.points || 0}</span></p>
+                    </div>
+                    <button class="bg-success text-white px-3 py-1.5 rounded text-sm font-medium">เลือก</button>
+                </li>
+            `).join('');
+        };
+
+        window.selectCustomerForBill = function(customer) {
+            window.appState.currentCustomer = customer;
+            const display = document.getElementById('pos-active-customer');
+            display.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                    ${customer.name.charAt(0)}
+                </div>
+                <div>
+                    <p class="font-bold text-sm text-primary">${customer.name}</p>
+                    <p class="text-xs text-gray-500">แต้มสะสม: <span class="font-bold">${customer.points || 0}</span></p>
+                </div>
+            `;
+            closeSelectCustomerModal();
+        };
+
+        window.clearCustomerFromBill = function() {
+            window.appState.currentCustomer = null;
+            const display = document.getElementById('pos-active-customer');
+            display.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-success text-white flex items-center justify-center">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-sm">ลูกค้าทั่วไป (Walk-in)</p>
+                    <p class="text-xs text-gray-500">แต้มสะสม: 0</p>
+                </div>
+            `;
+            closeSelectCustomerModal();
+        };
 
         // --- SEARCH MODAL (หมวดหมู่) ---
         window.openSearchModal = function() {
@@ -1646,216 +1901,6 @@
             }
         }
 
-        // --- CRM (Customer Logic) ---
-        let currentEditCustId = null;
-
-        window.openCustomerModal = function() {
-            currentEditCustId = null;
-            document.getElementById('cust-phone').value = '';
-            document.getElementById('cust-name').value = '';
-            document.getElementById('cust-level').value = 'Member';
-            document.getElementById('cust-points').value = '0';
-            
-            const modal = document.getElementById('modal-customer');
-            const content = document.getElementById('modal-customer-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => content.classList.remove('scale-95'), 10);
-        };
-
-        window.closeCustomerModal = function() {
-            const modal = document.getElementById('modal-customer');
-            const content = document.getElementById('modal-customer-content');
-            content.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        };
-
-        window.saveCustomer = async function() {
-            if(!window.appState.user) return;
-            const phone = document.getElementById('cust-phone').value.trim();
-            const name = document.getElementById('cust-name').value.trim();
-            const level = document.getElementById('cust-level').value;
-            const points = parseInt(document.getElementById('cust-points').value) || 0;
-
-            if(!phone || !name) return Swal.fire('แจ้งเตือน', 'กรุณากรอกเบอร์โทรและชื่อ', 'warning');
-            
-            const custData = { phone, name, level, points, updatedAt: Date.now() };
-
-            try {
-                if(currentEditCustId) {
-                    await updateDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'customers', currentEditCustId), custData);
-                    Swal.fire({icon: 'success', title: 'อัปเดตสมาชิกสำเร็จ', timer: 1500, showConfirmButton: false});
-                } else {
-                    if(window.appState.customers.some(c => c.phone === phone)) {
-                        return Swal.fire('แจ้งเตือน', 'เบอร์โทรศัพท์นี้เป็นสมาชิกอยู่แล้ว', 'error');
-                    }
-                    await addDoc(getColPath('customers'), { ...custData, createdAt: Date.now() });
-                    Swal.fire({icon: 'success', title: 'เพิ่มสมาชิกสำเร็จ', timer: 1500, showConfirmButton: false});
-                }
-                closeCustomerModal();
-            } catch (e) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
-            }
-        };
-
-        window.editCustomer = function(id) {
-            const cust = window.appState.customers.find(c => c.id === id);
-            if(!cust) return;
-            currentEditCustId = id;
-            document.getElementById('cust-phone').value = cust.phone;
-            document.getElementById('cust-name').value = cust.name;
-            document.getElementById('cust-level').value = cust.level || 'Member';
-            document.getElementById('cust-points').value = cust.points || 0;
-            
-            const modal = document.getElementById('modal-customer');
-            const content = document.getElementById('modal-customer-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => content.classList.remove('scale-95'), 10);
-        };
-
-        window.deleteCustomer = function(id) {
-            Swal.fire({
-                title: 'ลบข้อมูลสมาชิก?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e07a5f', confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    await deleteDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'customers', id));
-                    Swal.fire({icon: 'success', title: 'ลบสำเร็จ', timer: 1500, showConfirmButton: false});
-                }
-            });
-        };
-
-        function renderCustomers(query = '') {
-            const tbody = document.getElementById('crm-table-body');
-            let customers = window.appState.customers;
-            
-            if(query) {
-                query = query.toLowerCase();
-                customers = customers.filter(c => c.name.toLowerCase().includes(query) || c.phone.includes(query));
-            }
-
-            if(customers.length === 0) return tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">ไม่พบข้อมูลสมาชิก</td></tr>';
-
-            tbody.innerHTML = customers.map(c => `
-                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                    <td class="p-4 font-mono text-primary font-medium">${c.phone}</td>
-                    <td class="p-4 font-bold text-gray-800">${c.name}</td>
-                    <td class="p-4 text-center">
-                        <span class="${c.level === 'Gold' ? 'bg-yellow-100 text-yellow-700' : c.level === 'Silver' ? 'bg-gray-200 text-gray-700' : 'bg-blue-50 text-blue-600'} px-2 py-1 rounded-full text-xs font-bold">${c.level || 'Member'}</span>
-                    </td>
-                    <td class="p-4 text-right font-bold text-success">${(c.points || 0).toLocaleString()}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="editCustomer('${c.id}')" class="text-blue-500 hover:bg-blue-50 w-8 h-8 rounded transition mr-1"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="deleteCustomer('${c.id}')" class="text-red-500 hover:bg-red-50 w-8 h-8 rounded transition"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // --- POS Customer Selection ---
-        window.openSelectCustomerModal = function() {
-            const modal = document.getElementById('modal-select-customer');
-            const content = document.getElementById('modal-select-customer-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => content.classList.remove('scale-95'), 10);
-            renderSelectCustomerList();
-            document.getElementById('search-select-cust').value = '';
-            document.getElementById('search-select-cust').focus();
-        };
-
-        window.closeSelectCustomerModal = function() {
-            const modal = document.getElementById('modal-select-customer');
-            const content = document.getElementById('modal-select-customer-content');
-            content.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        };
-
-        window.renderSelectCustomerList = function(query = '') {
-            const ul = document.getElementById('select-customer-list');
-            let customers = window.appState.customers;
-            
-            if(query) {
-                query = query.toLowerCase();
-                customers = customers.filter(c => c.name.toLowerCase().includes(query) || c.phone.includes(query));
-            }
-
-            if(customers.length === 0) return ul.innerHTML = '<li class="p-4 text-center text-gray-400">ไม่พบลูกค้านี้ในระบบ</li>';
-
-            ul.innerHTML = customers.map(c => `
-                <li onclick='selectCustomerForBill(${JSON.stringify(c).replace(/'/g, "&#39;")})' class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:border-success transition flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-gray-800">${c.name} <span class="text-xs font-normal text-gray-500 ml-2">${c.phone}</span></p>
-                        <p class="text-xs text-gray-500 mt-1">ระดับ: ${c.level || 'Member'} | แต้มสะสม: <span class="font-bold text-success">${c.points || 0}</span></p>
-                    </div>
-                    <button class="bg-success text-white px-3 py-1.5 rounded text-sm font-medium">เลือก</button>
-                </li>
-            `).join('');
-        };
-
-        window.selectCustomerForBill = function(customer) {
-            window.appState.currentCustomer = customer;
-            const display = document.getElementById('pos-active-customer');
-            display.innerHTML = `
-                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
-                    ${customer.name.charAt(0)}
-                </div>
-                <div>
-                    <p class="font-bold text-sm text-primary">${customer.name}</p>
-                    <p class="text-xs text-gray-500">แต้มสะสม: <span class="font-bold">${customer.points || 0}</span></p>
-                </div>
-            `;
-            closeSelectCustomerModal();
-        };
-
-        window.clearCustomerFromBill = function() {
-            window.appState.currentCustomer = null;
-            const display = document.getElementById('pos-active-customer');
-            display.innerHTML = `
-                <div class="w-10 h-10 rounded-full bg-success text-white flex items-center justify-center">
-                    <i class="fa-solid fa-user"></i>
-                </div>
-                <div>
-                    <p class="font-bold text-sm">ลูกค้าทั่วไป (Walk-in)</p>
-                    <p class="text-xs text-gray-500">แต้มสะสม: 0</p>
-                </div>
-            `;
-            closeSelectCustomerModal();
-        };
-
-        // --- DOCUMENTS (เอกสารการขาย) ---
-        function renderDocuments(sales = window.appState.sales) {
-            const tbody = document.getElementById('documents-table-body');
-            if(!tbody || sales.length === 0) return tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400">ยังไม่มีประวัติเอกสาร</td></tr>';
-            
-            tbody.innerHTML = sales.map(s => {
-                const customerName = s.customer ? s.customer.name : 'ลูกค้าทั่วไป';
-                return `
-                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                    <td class="p-4 text-gray-600">${new Date(s.timestamp).toLocaleString('th-TH')}</td>
-                    <td class="p-4 font-mono text-sm font-bold">${s.receiptNo}</td>
-                    <td class="p-4">${customerName}</td>
-                    <td class="p-4 text-center"><span class="${s.paymentMethod === 'cash' ? 'text-success bg-green-50' : 'text-blue-600 bg-blue-50'} px-2 py-1 rounded-full text-xs font-medium">${s.paymentMethod === 'cash' ? 'เงินสด' : 'QR Code'}</span></td>
-                    <td class="p-4 text-right font-bold text-dark">฿${s.total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="showMockAlert('ดูบิล', 'บิลเลขที่ ${s.receiptNo}\\nยอดรวม: ${s.total} บาท')" class="bg-gray-100 text-gray-600 hover:bg-dark hover:text-white px-3 py-1 rounded text-xs font-medium transition">เปิดดู</button>
-                    </td>
-                </tr>
-            `}).join('');
-        }
-
-        function renderRecentSales(sales) {
-            const tbody = document.getElementById('recent-sales-table');
-            if(!tbody || sales.length === 0) return;
-            tbody.innerHTML = sales.map(s => `
-                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                    <td class="p-3 text-gray-500">${new Date(s.timestamp).toLocaleTimeString('th-TH')}</td>
-                    <td class="p-3 font-mono text-xs text-gray-600">${s.receiptNo}</td>
-                    <td class="p-3"><span class="${s.paymentMethod === 'cash' ? 'text-success bg-green-50' : 'text-blue-600 bg-blue-50'} px-2 py-1 rounded text-xs font-medium">${s.paymentMethod === 'cash' ? 'เงินสด' : 'QR Code'}</span></td>
-                    <td class="p-3 text-right font-bold">฿${s.total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                </tr>
-            `).join('');
-        }
-
-        // --- PRODUCT MANAGEMENT ---
-        let currentEditId = null;
         let html5QrCode = null;
 
         window.openProductModal = function() {
