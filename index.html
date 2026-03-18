@@ -42,7 +42,7 @@
     </script>
     
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #e2e8f0; overflow: hidden; }
+        body { font-family: 'Prompt', sans-serif; background-color: #e2e8f0; }
         .view-section { display: none; animation: fadeIn 0.2s ease-in-out; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -85,7 +85,7 @@
         }
     </style>
 </head>
-<body class="text-gray-800 h-screen flex flex-col">
+<body class="text-gray-800 min-h-screen flex flex-col">
 
     <!-- Top Header Bar -->
     <header class="bg-dark text-white h-14 flex items-center justify-between px-4 fixed w-full z-40 shadow-sm">
@@ -151,10 +151,10 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-grow relative mt-14 h-[calc(100vh-3.5rem)] overflow-hidden">
+    <main class="flex-grow relative mt-14 min-h-[calc(100vh-3.5rem)]">
         
         <!-- ================= VIEW: POS ================= -->
-        <div id="view-pos" class="view-section active h-full p-3 bg-gray-200 overflow-y-auto md:overflow-hidden">
+        <div id="view-pos" class="view-section active h-[calc(100vh-3.5rem)] p-3 bg-gray-200 overflow-y-auto md:overflow-hidden">
             <div class="flex flex-col md:flex-row justify-between h-full max-w-[1500px] mx-auto gap-3">
                 
                 <!-- LEFT PANEL -->
@@ -272,7 +272,7 @@
         </div>
 
         <!-- ================= VIEW: INVENTORY ================= -->
-        <div id="view-inventory" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-lightbg">
+        <div id="view-inventory" class="view-section min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-lightbg">
             <div class="max-w-6xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
@@ -311,7 +311,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="overflow-x-auto h-[700px]">
+                    <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse relative">
                             <thead class="sticky top-0 z-10">
                                 <tr class="bg-dark text-white text-xs uppercase tracking-wider">
@@ -336,7 +336,7 @@
         </div>
 
         <!-- ================= VIEW: CRM (ระบบสมาชิก) ================= -->
-        <div id="view-crm" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-lightbg">
+        <div id="view-crm" class="view-section min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-lightbg">
             <div class="max-w-6xl mx-auto">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -355,7 +355,7 @@
                             <input type="text" id="crm-search" onkeyup="renderCustomers(this.value)" class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-success focus:border-success outline-none text-sm" placeholder="ค้นหาเบอร์โทร หรือ ชื่อลูกค้า...">
                         </div>
                     </div>
-                    <div class="overflow-x-auto h-[50vh]">
+                    <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse relative">
                             <thead class="sticky top-0 z-10">
                                 <tr class="bg-dark text-white text-xs uppercase tracking-wider">
@@ -376,7 +376,7 @@
         </div>
 
         <!-- ================= VIEW: DOCUMENTS (ประวัติใบเสร็จรับเงิน) ================= -->
-        <div id="view-documents" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-gray-100">
+        <div id="view-documents" class="view-section min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-gray-100">
             <div class="max-w-6xl mx-auto">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -389,7 +389,7 @@
                     <div class="bg-success text-white px-6 py-4 font-bold flex items-center gap-2">
                         <i class="fa-solid fa-file-invoice"></i> ประวัติใบเสร็จรับเงิน
                     </div>
-                    <div class="overflow-x-auto h-[60vh]">
+                    <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
                                 <tr class="text-gray-600">
@@ -413,7 +413,7 @@
         </div>
 
         <!-- ================= VIEW: REPORTS ================= -->
-        <div id="view-reports" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-lightbg">
+        <div id="view-reports" class="view-section min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-lightbg">
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-2xl font-bold text-dark mb-6">รายงานยอดขาย Real-Time</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -448,7 +448,7 @@
         </div>
 
         <!-- ================= VIEW: SETTINGS ================= -->
-        <div id="view-settings" class="view-section h-full p-4 md:p-6 overflow-y-auto bg-gray-100">
+        <div id="view-settings" class="view-section min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-gray-100">
             <div class="max-w-6xl mx-auto">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-fit">
