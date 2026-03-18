@@ -57,6 +57,12 @@
         }
         .toggle-checkbox:checked { right: 0; border-color: #14b8a6; }
         .toggle-checkbox:checked + .toggle-label { background-color: #14b8a6; }
+        
+        /* สไตล์ Scrollbar สำหรับ Dropdown ค้นหา */
+        .search-dropdown-scroll::-webkit-scrollbar { width: 6px; }
+        .search-dropdown-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .search-dropdown-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .search-dropdown-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="text-gray-800 h-screen flex flex-col">
@@ -134,17 +140,26 @@
                 <!-- LEFT PANEL -->
                 <div class="w-full md:w-[66%] flex flex-col bg-white rounded-lg shadow-sm overflow-hidden border border-gray-300 h-[65vh] md:h-full min-w-0">
                     
-                    <div class="bg-white p-3 border-b border-gray-200 flex gap-2 items-center shadow-sm z-10">
-                        <div class="flex-grow flex items-center bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus-within:border-success focus-within:ring-1 focus-within:ring-success transition">
-                            <i class="fa-solid fa-barcode text-gray-400 mr-2 text-lg"></i>
-                            <input type="text" id="barcode-input" class="w-full bg-transparent focus:outline-none text-gray-700 placeholder-gray-400" placeholder="สแกนบาร์โค้ด หรือ พิมพ์รหัสสินค้า (Enter)..." autocomplete="off">
+                    <div class="bg-white p-3 border-b border-gray-200 flex gap-2 items-center shadow-sm z-20 relative">
+                        <!-- Wrapper สำหรับช่องค้นหาและ Dropdown -->
+                        <div id="pos-search-wrapper" class="flex-grow relative">
+                            <div class="flex items-center bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus-within:border-success focus-within:ring-1 focus-within:ring-success transition">
+                                <i class="fa-solid fa-barcode text-gray-400 mr-2 text-lg"></i>
+                                <input type="text" id="barcode-input" oninput="handlePosSearchInput()" class="w-full bg-transparent focus:outline-none text-gray-700 placeholder-gray-400" placeholder="สแกนบาร์โค้ด หรือ พิมพ์ชื่อสินค้าค้นหา..." autocomplete="off">
+                            </div>
+                            
+                            <!-- Dropdown Autocomplete สำหรับผลลัพธ์การค้นหา -->
+                            <div id="pos-search-dropdown" class="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 hidden max-h-80 overflow-y-auto search-dropdown-scroll top-full left-0">
+                                <!-- รายการจะถูกสร้างด้วย JS -->
+                            </div>
                         </div>
-                        <button onclick="openSearchModal()" class="bg-dark hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-sm whitespace-nowrap">
-                            <i class="fa-solid fa-magnifying-glass"></i> <span class="hidden sm:inline">ค้นหาสินค้า</span>
+                        
+                        <button onclick="openSearchModal()" class="bg-dark hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-sm whitespace-nowrap h-[42px]">
+                            <i class="fa-solid fa-layer-group"></i> <span class="hidden sm:inline">หมวดหมู่</span>
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-dark text-white text-xs font-medium">
+                    <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-dark text-white text-xs font-medium z-10">
                         <div class="col-span-1 text-center">#</div>
                         <div class="col-span-2">รหัสสินค้า</div>
                         <div class="col-span-4">ชื่อสินค้า</div>
@@ -158,12 +173,12 @@
                         <div id="empty-cart-msg" class="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
                             <i class="fa-solid fa-cart-arrow-down text-6xl mb-4 text-gray-200"></i>
                             <p class="text-sm font-medium text-gray-400">ยังไม่มีรายการสินค้า</p>
-                            <p class="text-xs text-gray-400 mt-1">สแกนบาร์โค้ดเพื่อเริ่มขาย</p>
+                            <p class="text-xs text-gray-400 mt-1">พิมพ์ชื่อสินค้าเพื่อค้นหา หรือ สแกนบาร์โค้ด</p>
                         </div>
                         <ul id="cart-items" class="flex flex-col text-sm text-gray-700 divide-y divide-gray-100 hidden"></ul>
                     </div>
 
-                    <div class="bg-gray-50 border-t border-gray-200 p-2 flex flex-wrap justify-between gap-1 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
+                    <div class="bg-gray-50 border-t border-gray-200 p-2 flex flex-wrap justify-between gap-1 shadow-[0_-2px_10px_rgba(0,0,0,0.02)] z-10">
                         <button onclick="clearCart()" class="flex-1 min-w-[70px] bg-primary hover:bg-primaryhover text-white rounded py-2 px-1 text-xs font-medium flex flex-col items-center gap-1 transition">
                             <i class="fa-solid fa-trash-can text-sm"></i> ล้างบิล
                         </button>
@@ -636,15 +651,15 @@
         </div>
     </div>
 
-    <!-- Modal: Search Products -->
+    <!-- Modal: Search Products (หมวดหมู่/ค้นหาแบบกริด) -->
     <div id="modal-search" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden transform scale-95 transition-transform duration-300" id="modal-search-content">
             <div class="px-6 py-4 border-b border-gray-200 bg-dark text-white flex justify-between items-center">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-boxes-stacked mr-2"></i> เลือกรายการสินค้า</h3>
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-layer-group mr-2"></i> หมวดหมู่สินค้า</h3>
                 <button onclick="closeSearchModal()" class="text-gray-300 hover:text-white text-2xl transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-4 bg-gray-50 border-b border-gray-200">
-                <input type="text" id="search-modal-input" onkeyup="filterSearchModal()" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-success outline-none" placeholder="ค้นหาชื่อสินค้า หรือ หมวดหมู่...">
+                <input type="text" id="search-modal-input" oninput="filterSearchModal()" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-success outline-none" placeholder="ค้นหาชื่อสินค้า หรือ หมวดหมู่...">
             </div>
             <div class="flex-grow overflow-y-auto p-4 bg-gray-100">
                 <div id="modal-products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
@@ -802,9 +817,9 @@
             products: [], 
             sales: [],
             customers: [], 
-            categories: [], // State สำหรับเก็บหมวดหมู่
-            invCurrentPage: 1, // เพิ่มตัวแปรเก็บหน้าปัจจุบันของคลังสินค้า
-            invItemsPerPage: 75, // เพิ่มตัวแปรแสดงรายการ 75 รายการ/หน้า
+            categories: [], 
+            invCurrentPage: 1, 
+            invItemsPerPage: 75, 
             user: null,
             db: null,
             appId: typeof __app_id !== 'undefined' ? __app_id : 'pos-app-' + Math.floor(Math.random() * 1000)
@@ -919,7 +934,7 @@
                 if (reportTodayBills) reportTodayBills.innerText = sales.filter(s => new Date(s.timestamp).toDateString() === today).length;
                 
                 renderRecentSales(sales.slice(0, 5));
-                renderDocuments(sales); // วาดตารางในหน้าระบบเอกสาร
+                renderDocuments(sales); 
             });
 
             // ฟังลูกค้า CRM
@@ -939,16 +954,74 @@
                 e.preventDefault();
                 processBarcode(barcodeInput.value.trim());
                 barcodeInput.value = ''; 
+                document.getElementById('pos-search-dropdown').classList.add('hidden');
             }
         });
 
-        document.getElementById('view-pos').addEventListener('click', (e) => {
-            if(e.target.id === 'view-pos' || e.target.id === 'cart-container') barcodeInput.focus();
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('pos-search-dropdown');
+            if (dropdown && !e.target.closest('#pos-search-wrapper')) {
+                dropdown.classList.add('hidden');
+            }
         });
+
+        // Autocomplete search on main POS input
+        window.handlePosSearchInput = function() {
+            const query = document.getElementById('barcode-input').value.toLowerCase().trim();
+            const dropdown = document.getElementById('pos-search-dropdown');
+
+            if (!query) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const matched = window.appState.products.filter(p => p.name.toLowerCase().includes(query) || p.barcode.includes(query));
+
+            if (matched.length === 0) {
+                dropdown.innerHTML = '<div class="p-3 text-gray-500 text-sm text-center">ไม่พบสินค้าที่ค้นหา</div>';
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            dropdown.innerHTML = matched.slice(0, 15).map(p => {
+                const imgPlaceholder = p.image || `https://placehold.co/150x150/f4f1de/3d405b?text=${encodeURIComponent(p.name.charAt(0))}`;
+                return `
+                <div onclick='selectPosSearchItem(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="p-3 border-b border-gray-100 hover:bg-success hover:text-white cursor-pointer flex items-center justify-between transition group">
+                    <div class="flex items-center gap-3">
+                        <img src="${imgPlaceholder}" class="w-10 h-10 rounded object-cover">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-sm">${p.name}</span>
+                            <span class="text-xs text-gray-400 group-hover:text-gray-100">${p.barcode}</span>
+                        </div>
+                    </div>
+                    <div class="font-bold text-sm">฿${p.price.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                </div>
+            `}).join('');
+            dropdown.classList.remove('hidden');
+        }
+
+        window.selectPosSearchItem = function(product) {
+            if(product.stock <= 0 && !product.isWeighed) {
+                Swal.fire({ title: 'สินค้าหมด', text: `${product.name} สต็อกคงเหลือ 0`, icon: 'error', timer: 1500, showConfirmButton: false });
+                return;
+            }
+            addToCart(product, 1);
+            document.getElementById('barcode-input').value = '';
+            document.getElementById('pos-search-dropdown').classList.add('hidden');
+            document.getElementById('barcode-input').focus();
+        }
 
         function processBarcode(code) {
             if(!code) return;
-            const product = window.appState.products.find(p => p.barcode === code || p.name.includes(code));
+            // เน้นการหาบาร์โค้ดเป๊ะๆ ก่อน (สำหรับเครื่องสแกนบาร์โค้ดจะได้ทำงานไวและไม่ผิดพลาด)
+            let product = window.appState.products.find(p => p.barcode === code);
+            
+            // ถ้าไม่เจอบาร์โค้ดเป๊ะๆ ลองหาจากชื่อ
+            if(!product) {
+                product = window.appState.products.find(p => p.name.toLowerCase().includes(code.toLowerCase()));
+            }
+
             if(product) {
                 if(product.stock <= 0 && !product.isWeighed) {
                     Swal.fire({ title: 'สินค้าหมด', text: `${product.name} สต็อกคงเหลือ 0`, icon: 'error', timer: 1500, showConfirmButton: false });
@@ -958,6 +1031,300 @@
             } else {
                 Swal.fire({ title: 'ไม่พบสินค้า', text: `รหัส: ${code}`, icon: 'warning', timer: 1000, showConfirmButton: false });
             }
+        }
+
+        window.addToCart = function(product, qty = 1) {
+            const existing = window.appState.cart.find(item => item.id === product.id);
+            if(existing) {
+                if(existing.qty + qty > product.stock && !product.isWeighed) {
+                    Swal.fire({ title: 'สต็อกไม่พอ', icon: 'warning', timer: 1000, showConfirmButton: false });
+                    return;
+                }
+                existing.qty += qty;
+            } else {
+                window.appState.cart.push({ ...product, qty: qty });
+            }
+            updateCartUI();
+            closeSearchModal();
+            barcodeInput.focus();
+        };
+
+        window.removeFromCart = function(id) {
+            window.appState.cart = window.appState.cart.filter(item => item.id !== id);
+            updateCartUI();
+        };
+
+        window.updateCartQty = function(id, change) {
+            const item = window.appState.cart.find(i => i.id === id);
+            if(item) {
+                const newQty = item.qty + change;
+                if(newQty <= 0) removeFromCart(id);
+                else {
+                    const productInfo = window.appState.products.find(p => p.id === id);
+                    if(productInfo && newQty > productInfo.stock && !productInfo.isWeighed) return;
+                    item.qty = newQty;
+                    updateCartUI();
+                }
+            }
+        };
+
+        function updateCartUI() {
+            const cartList = document.getElementById('cart-items');
+            const emptyMsg = document.getElementById('empty-cart-msg');
+            const cart = window.appState.cart;
+
+            if(cart.length === 0) {
+                cartList.classList.add('hidden');
+                emptyMsg.classList.remove('hidden');
+            } else {
+                cartList.classList.remove('hidden');
+                emptyMsg.classList.add('hidden');
+                
+                cartList.innerHTML = cart.map((item, index) => `
+                    <li class="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
+                        <div class="col-span-1 text-center text-xs text-gray-400 font-medium">${index + 1}</div>
+                        <div class="col-span-2 text-xs font-mono text-gray-500">${item.barcode}</div>
+                        <div class="col-span-4 font-medium text-gray-800 line-clamp-1 text-sm">${item.name}</div>
+                        <div class="col-span-2 flex justify-center items-center gap-1">
+                            <button onclick="updateCartQty('${item.id}', -1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600 hover:bg-gray-200 flex items-center justify-center transition"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                            <span class="w-8 text-center text-sm font-bold text-dark">${item.qty}</span>
+                            <button onclick="updateCartQty('${item.id}', 1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600 hover:bg-gray-200 flex items-center justify-center transition"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                        </div>
+                        <div class="col-span-1 text-right text-xs text-gray-500">${item.price.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        <div class="col-span-1 text-right font-bold text-primary text-sm">${(item.price * item.qty).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        <div class="col-span-1 text-center">
+                            <button onclick="removeFromCart('${item.id}')" class="text-gray-300 hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </li>
+                `).join('');
+                
+                const container = document.getElementById('cart-container');
+                container.scrollTop = container.scrollHeight;
+            }
+            calculateTotals();
+        }
+
+        window.calculateTotals = function() {
+            const subtotal = window.appState.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const count = window.appState.cart.reduce((sum, item) => sum + item.qty, 0);
+            const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+            const total = Math.max(0, subtotal - discount);
+
+            document.getElementById('summary-count').innerHTML = `${count} <span class="text-sm font-normal text-gray-500">ชิ้น</span>`;
+            document.getElementById('summary-subtotal').innerText = `${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
+            document.getElementById('summary-total').innerText = `${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            
+            document.getElementById('payment-modal-total').innerHTML = `<span class="text-3xl">฿</span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            window.appState.currentTotal = total; 
+        }
+
+        window.clearCart = function() {
+            if(window.appState.cart.length === 0) return;
+            Swal.fire({
+                title: 'ยกเลิกรายการทั้งหมด?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e07a5f', confirmButtonText: 'ยืนยันเคลียร์บิล', cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.appState.cart = [];
+                    document.getElementById('discount-input').value = 0;
+                    updateCartUI();
+                    barcodeInput.focus();
+                }
+            });
+        };
+
+        window.holdBill = function() {
+            if(window.appState.cart.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีสินค้าในตะกร้าสำหรับพักบิล', 'warning');
+            Swal.fire({
+                title: 'พักบิลนี้ชั่วคราว?', text: 'บันทึกรายการนี้ไว้ชั่วคราวเพื่อเปิดบิลใหม่ให้ลูกค้าคิวถัดไป', icon: 'question', showCancelButton: true, confirmButtonColor: '#3d405b', confirmButtonText: 'ยืนยันพักบิล', cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.appState.cart = [];
+                    document.getElementById('discount-input').value = 0;
+                    updateCartUI();
+                    barcodeInput.focus();
+                    Swal.fire({icon: 'success', title: 'พักบิลสำเร็จ', timer: 1500, showConfirmButton: false});
+                }
+            });
+        };
+
+        // --- PAYMENT MODAL LOGIC ---
+        window.openPaymentModal = function() {
+            if(!window.appState.user) return Swal.fire('Error', 'กรุณารอระบบเชื่อมต่อฐานข้อมูล', 'error');
+            if(window.appState.cart.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีสินค้าในตะกร้า', 'warning');
+            
+            resetPaymentModal();
+            const modal = document.getElementById('modal-payment');
+            const content = document.getElementById('modal-payment-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.remove('scale-95'), 10);
+        };
+
+        window.closePaymentModal = function() {
+            const modal = document.getElementById('modal-payment');
+            const content = document.getElementById('modal-payment-content');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            barcodeInput.focus();
+        };
+
+        window.showQRSection = function() {
+            document.getElementById('payment-actions').classList.add('hidden');
+            document.getElementById('qr-section').classList.remove('hidden');
+            document.getElementById('qr-section').classList.add('flex');
+        };
+
+        window.resetPaymentModal = function() {
+            document.getElementById('qr-section').classList.add('hidden');
+            document.getElementById('qr-section').classList.remove('flex');
+            document.getElementById('payment-actions').classList.remove('hidden');
+        };
+
+        window.payWithCash = async function() {
+            const total = window.appState.currentTotal;
+            closePaymentModal(); 
+
+            setTimeout(async () => {
+                const { value: cashReceived } = await Swal.fire({
+                    title: 'รับเงินสด',
+                    html: `<h2 class="text-4xl font-bold text-success mb-4">${total.toLocaleString('th-TH', {minimumFractionDigits:2})} <span class="text-2xl">฿</span></h2>`,
+                    input: 'number',
+                    inputLabel: 'ใส่จำนวนเงินที่รับมาจากลูกค้า',
+                    inputValue: total,
+                    showCancelButton: true,
+                    confirmButtonText: 'รับชำระเงิน',
+                    confirmButtonColor: '#14b8a6', 
+                    cancelButtonText: 'ยกเลิก',
+                    inputValidator: (value) => {
+                        if (!value || value < total) return 'จำนวนเงินไม่พอ!';
+                    }
+                });
+
+                if (cashReceived) {
+                    const change = cashReceived - total;
+                    await finalizeSale('cash', total, cashReceived, change);
+                } else {
+                    openPaymentModal();
+                }
+            }, 300);
+        };
+
+        window.confirmQRPayment = async function() {
+            const total = window.appState.currentTotal;
+            closePaymentModal();
+            await finalizeSale('qr', total, total, 0);
+        };
+
+        async function finalizeSale(method, total, received, change) {
+            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            try {
+                const receiptNo = 'REC' + Date.now().toString().slice(-6);
+                const timestamp = Date.now();
+                const items = [...window.appState.cart];
+                const isPrintChecked = document.getElementById('print-receipt-toggle').checked;
+                
+                const customerData = window.appState.currentCustomer ? {
+                    id: window.appState.currentCustomer.id,
+                    name: window.appState.currentCustomer.name,
+                    phone: window.appState.currentCustomer.phone
+                } : null;
+
+                await addDoc(getColPath('sales'), { 
+                    receiptNo, items, total, paymentMethod: method, timestamp, 
+                    cashierId: window.appState.user.uid,
+                    customer: customerData
+                });
+
+                for (const item of items) {
+                    if(!item.isWeighed) {
+                        const productRef = doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'products', item.id);
+                        const currentStock = window.appState.products.find(p => p.id === item.id)?.stock || 0;
+                        await updateDoc(productRef, { stock: Math.max(0, currentStock - item.qty) });
+                    }
+                }
+
+                let pointsEarned = 0;
+                if (window.appState.currentCustomer) {
+                    pointsEarned = Math.floor(total / 100);
+                    if (pointsEarned > 0) {
+                        const custRef = doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'customers', window.appState.currentCustomer.id);
+                        const newPoints = (window.appState.currentCustomer.points || 0) + pointsEarned;
+                        await updateDoc(custRef, { points: newPoints });
+                    }
+                }
+
+                window.appState.cart = [];
+                document.getElementById('discount-input').value = 0;
+                clearCustomerFromBill();
+                updateCartUI();
+
+                let htmlMsg = ``;
+                if(method === 'cash') {
+                    htmlMsg = `เงินทอน: <span class="text-4xl font-bold text-success block mt-2">฿${change.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>`;
+                } else {
+                    htmlMsg = `<span class="text-xl font-bold text-success block mt-2">รับชำระผ่าน QR สำเร็จ</span>`;
+                }
+
+                if (pointsEarned > 0) htmlMsg += `<p class="text-sm text-primary mt-2 font-bold"><i class="fa-solid fa-star"></i> ลูกค้าได้รับ ${pointsEarned} แต้ม</p>`;
+                if(isPrintChecked) htmlMsg += `<p class="text-sm text-gray-500 mt-4"><i class="fa-solid fa-print"></i> กำลังสั่งพิมพ์ใบเสร็จ...</p>`;
+
+                Swal.fire({
+                    title: 'ชำระเงินเสร็จสิ้น!',
+                    html: htmlMsg,
+                    icon: 'success',
+                    timer: isPrintChecked ? 4000 : 3000,
+                    showConfirmButton: false
+                }).then(() => barcodeInput.focus());
+
+            } catch (error) {
+                console.error("Sale Error:", error);
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกรายการได้', 'error');
+            }
+        }
+
+        // --- SEARCH MODAL (หมวดหมู่) ---
+        window.openSearchModal = function() {
+            const modal = document.getElementById('modal-search');
+            const content = document.getElementById('modal-search-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.remove('scale-95'), 10);
+            renderSearchModalGrid();
+            document.getElementById('search-modal-input').value = '';
+            document.getElementById('search-modal-input').focus();
+        };
+
+        window.closeSearchModal = function() {
+            const modal = document.getElementById('modal-search');
+            const content = document.getElementById('modal-search-content');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            barcodeInput.focus();
+        };
+
+        window.filterSearchModal = function() {
+            const query = document.getElementById('search-modal-input').value.toLowerCase();
+            renderSearchModalGrid(query);
+        }
+
+        function renderSearchModalGrid(query = '') {
+            const grid = document.getElementById('modal-products-grid');
+            let displayItems = window.appState.products;
+            if(query) displayItems = displayItems.filter(p => p.name.toLowerCase().includes(query) || p.barcode.includes(query) || (p.category && p.category.toLowerCase().includes(query)));
+
+            if(displayItems.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">ไม่พบสินค้าที่ค้นหา</div>';
+                return;
+            }
+
+            grid.innerHTML = displayItems.map(p => {
+                const imgPlaceholder = p.image || `https://placehold.co/150x150/f4f1de/3d405b?text=${encodeURIComponent(p.name.charAt(0))}`;
+                return `
+                <div onclick='addToCart(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="bg-white border border-gray-200 rounded-lg p-2 cursor-pointer flex flex-col items-center hover:border-success hover:shadow-md transition">
+                    <img src="${imgPlaceholder}" class="w-16 h-16 object-cover rounded mb-2">
+                    <p class="font-medium text-xs text-gray-700 line-clamp-2 text-center h-8 w-full leading-tight">${p.name}</p>
+                    <span class="font-bold text-primary mt-1 text-sm">฿${p.price.toLocaleString()}</span>
+                </div>
+            `}).join('');
         }
 
         // --- INVENTORY EXPORT / IMPORT ---
@@ -980,7 +1347,6 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Products");
             
-            // สร้างชื่อไฟล์พร้อมวันที่
             const dateStr = new Date().toISOString().split('T')[0];
             XLSX.writeFile(wb, `Products_Export_${dateStr}.xlsx`);
             Swal.close();
@@ -1033,7 +1399,7 @@
                     console.error("Import Error:", err);
                     Swal.fire('ข้อผิดพลาด', 'รูปแบบไฟล์ไม่ถูกต้อง หรือนำเข้าไม่สำเร็จ กรุณาตรวจสอบคอลัมน์ให้ตรงตามรูปแบบส่งออก', 'error');
                 }
-                event.target.value = ''; // Reset input
+                event.target.value = ''; 
             };
             reader.readAsArrayBuffer(file);
         };
@@ -1049,23 +1415,19 @@
         window.updateCategoryDropdowns = function() {
             let cats = window.appState.categories;
             if (cats.length === 0) {
-                // Fallback ถ่ายังไม่มีข้อมูลหมวดหมู่ในฐานข้อมูล
                 cats = [{name: 'เครื่องดื่ม'}, {name: 'ขนมสแน็ค'}, {name: 'ของใช้'}, {name: 'วัตถุดิบ'}, {name: 'อื่นๆ'}];
             }
 
-            // Update Inventory Filter
             const filterDropdown = document.getElementById('inv-category-filter');
             if (filterDropdown) {
                 const currentVal = filterDropdown.value;
                 filterDropdown.innerHTML = `<option value="All">ทุกหมวดหมู่</option>` + 
                     cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-                // พยายามรักษาค่าเดิมไว้ถ้ามี
                 if (cats.some(c => c.name === currentVal) || currentVal === 'All') {
                     filterDropdown.value = currentVal;
                 }
             }
 
-            // Update Product Form Dropdown
             const formDropdown = document.getElementById('form-category');
             if (formDropdown) {
                 const currentFormVal = formDropdown.value;
@@ -1220,7 +1582,6 @@
                 return matchQuery && matchCategory;
             });
 
-            // จัดเรียง: สินค้าที่ใกล้หมดสต็อกอยู่บนสุด (stock น้อยไปมาก)
             filtered.sort((a, b) => {
                 const stockA = a.isWeighed ? Infinity : a.stock;
                 const stockB = b.isWeighed ? Infinity : b.stock;
@@ -1232,7 +1593,7 @@
 
         window.changeInvPage = function(newPage) {
             window.appState.invCurrentPage = newPage;
-            window.filterInventory(false); // เปลี่ยนหน้าแต่ไม่รีเซ็ตหน้ากลับไป 1
+            window.filterInventory(false); 
         };
 
         function renderInventory(products = window.appState.products) {
@@ -1248,7 +1609,6 @@
             const totalItems = products.length;
             const totalPages = Math.ceil(totalItems / window.appState.invItemsPerPage) || 1;
             
-            // ตรวจสอบกันพลาดเผื่อหน้าเกิน
             if (window.appState.invCurrentPage > totalPages) window.appState.invCurrentPage = totalPages;
             if (window.appState.invCurrentPage < 1) window.appState.invCurrentPage = 1;
 
@@ -1274,7 +1634,6 @@
                 </tr>
             `).join('');
 
-            // อัปเดตแถบ Pagination แบ่งหน้าด้านล่าง
             if(paginationContainer) {
                 paginationContainer.innerHTML = `
                     <span class="text-gray-600">แสดงรายการที่ <span class="font-bold">${startIndex + 1}</span> ถึง <span class="font-bold">${Math.min(endIndex, totalItems)}</span> จากทั้งหมด <span class="font-bold">${totalItems}</span> รายการ</span>
@@ -1326,7 +1685,6 @@
                     await updateDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'customers', currentEditCustId), custData);
                     Swal.fire({icon: 'success', title: 'อัปเดตสมาชิกสำเร็จ', timer: 1500, showConfirmButton: false});
                 } else {
-                    // Check duplicate phone
                     if(window.appState.customers.some(c => c.phone === phone)) {
                         return Swal.fire('แจ้งเตือน', 'เบอร์โทรศัพท์นี้เป็นสมาชิกอยู่แล้ว', 'error');
                     }
@@ -1505,7 +1863,6 @@
             document.getElementById('form-barcode').value = '';
             document.getElementById('form-name').value = '';
             
-            // ตั้งค่าหมวดหมู่เริ่มต้นอิงจาก Dropdown ถาามี
             const firstCat = document.getElementById('form-category').options[0];
             if(firstCat) document.getElementById('form-category').value = firstCat.value;
             
@@ -1680,7 +2037,7 @@
                                 batchData.push({
                                     barcode: cat.prefix + num + Math.floor(Math.random() * 9000 + 1000).toString(),
                                     name: itemName, category: cat.catName, cost: cost, price: price,
-                                    stock: Math.floor(Math.random() * 20) + 1, // สุ่มให้สต็อกน้อยๆ เพื่อให้เห็นการจัดเรียง
+                                    stock: Math.floor(Math.random() * 20) + 1, 
                                     isWeighed: false,
                                     image: `https://loremflickr.com/150/150/${cat.keyword}?lock=${cIdx * 100 + iIdx}`
                                 });
