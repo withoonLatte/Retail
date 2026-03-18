@@ -558,6 +558,44 @@
     <!-- Hidden Print Receipt Layout -->
     <div id="print-receipt" class="receipt-print"></div>
 
+    <!-- MODAL: ADD/EDIT CUSTOMER (CRM) -->
+    <div id="modal-customer" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300" id="modal-customer-content">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-dark text-white">
+                <h3 class="font-bold text-lg">เพิ่ม/แก้ไข สมาชิก</h3>
+                <button onclick="closeCustomerModal()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ (รหัสสมาชิก) <span class="text-red-500">*</span></label>
+                    <input type="text" id="cust-phone" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                    <input type="text" id="cust-name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ระดับสมาชิก</label>
+                        <select id="cust-level" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none bg-white">
+                            <option value="Member">Member (ทั่วไป)</option>
+                            <option value="Silver">Silver</option>
+                            <option value="Gold">Gold</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">แต้มสะสม</label>
+                        <input type="number" id="cust-points" value="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-success outline-none">
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                <button onclick="closeCustomerModal()" class="px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium transition">ยกเลิก</button>
+                <button onclick="saveCustomer()" class="px-4 py-2 bg-success hover:bg-successhover text-white rounded-lg text-sm font-medium shadow-sm transition">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: SELECT CUSTOMER (FOR POS) -->
     <div id="modal-select-customer" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl h-[70vh] flex flex-col overflow-hidden transform scale-95 transition-transform duration-300" id="modal-select-customer-content">
@@ -702,7 +740,7 @@
     </div>
 
     <!-- Modal: Add Product (Inventory) -->
-    <div id="modal-product" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div id="modal-product" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300" id="modal-product-content">
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-dark text-white">
                 <h3 class="font-bold text-lg">เพิ่ม/แก้ไข สินค้า</h3>
@@ -1103,6 +1141,7 @@
             document.getElementById('summary-subtotal').innerText = `${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
             document.getElementById('summary-vat').innerText = `${vatAmount.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
             document.getElementById('summary-total').innerText = `${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            document.getElementById('payment-modal-total').innerHTML = `<span class="text-3xl">฿</span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
             
             window.appState.currentSubtotal = subtotal;
             window.appState.currentDiscount = discount;
@@ -1149,7 +1188,6 @@
             const total = window.appState.currentTotal;
             document.getElementById('payment-modal-total').innerHTML = `<span class="text-3xl">฿</span>${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
             
-            // ตั้งค่าเริ่มต้นช่องรับเงินให้เท่ากับยอดสุทธิ
             const cashInput = document.getElementById('payment-cash-input');
             cashInput.value = total;
             calculateChange();
@@ -2083,6 +2121,166 @@
                 `;
             }
         }
+
+        // --- PRODUCT MANAGEMENT ---
+        window.openProductModal = function() {
+            currentEditId = null;
+            document.getElementById('form-barcode').value = '';
+            document.getElementById('form-name').value = '';
+            
+            const firstCat = document.getElementById('form-category').options[0];
+            if(firstCat) document.getElementById('form-category').value = firstCat.value;
+            
+            document.getElementById('form-cost').value = '';
+            document.getElementById('form-price').value = '';
+            document.getElementById('form-stock').value = '';
+            document.getElementById('form-isWeighed').checked = false;
+            document.getElementById('form-image-input').value = '';
+            document.getElementById('form-image-base64').value = '';
+            document.getElementById('form-image-preview').src = '';
+            document.getElementById('form-image-preview').classList.add('hidden');
+            document.getElementById('form-image-icon').classList.remove('hidden');
+            
+            const modal = document.getElementById('modal-product');
+            const content = document.getElementById('modal-product-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.remove('scale-95'), 10);
+        };
+
+        window.closeProductModal = function() {
+            if (typeof stopCameraScanner === 'function') stopCameraScanner(); 
+            const modal = document.getElementById('modal-product');
+            const content = document.getElementById('modal-product-content');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.startCameraScanner = function() {
+            const cameraContainer = document.getElementById('camera-container');
+            cameraContainer.classList.remove('hidden');
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText, decodedResult) => {
+                    document.getElementById('form-barcode').value = decodedText;
+                    stopCameraScanner();
+                    Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1500 }).fire({ icon: 'success', title: 'สแกนสำเร็จ: ' + decodedText });
+                },
+                (errorMessage) => {}
+            ).catch((err) => {
+                cameraContainer.classList.add('hidden');
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเข้าถึงกล้องได้ กรุณาตรวจสอบสิทธิ์', 'error');
+            });
+        };
+
+        window.stopCameraScanner = function() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => document.getElementById('camera-container').classList.add('hidden'));
+            } else document.getElementById('camera-container').classList.add('hidden');
+        };
+
+        window.handleProductImageUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 300; 
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } 
+                    else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    document.getElementById('form-image-preview').src = dataUrl;
+                    document.getElementById('form-image-preview').classList.remove('hidden');
+                    document.getElementById('form-image-icon').classList.add('hidden');
+                    document.getElementById('form-image-base64').value = dataUrl;
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        };
+
+        window.editProduct = function(id) {
+            const product = window.appState.products.find(p => p.id === id);
+            if(!product) return;
+            
+            openProductModal();
+            
+            setTimeout(() => {
+                currentEditId = id;
+                document.getElementById('form-barcode').value = product.barcode || '';
+                document.getElementById('form-name').value = product.name || '';
+                document.getElementById('form-category').value = product.category || 'อื่นๆ';
+                document.getElementById('form-cost').value = product.cost || 0;
+                document.getElementById('form-price').value = product.price || 0;
+                document.getElementById('form-stock').value = product.stock || 0;
+                document.getElementById('form-isWeighed').checked = product.isWeighed || false;
+                
+                if (product.image) {
+                    document.getElementById('form-image-base64').value = product.image;
+                    document.getElementById('form-image-preview').src = product.image;
+                    document.getElementById('form-image-preview').classList.remove('hidden');
+                    document.getElementById('form-image-icon').classList.add('hidden');
+                } else {
+                    document.getElementById('form-image-base64').value = '';
+                    document.getElementById('form-image-preview').src = '';
+                    document.getElementById('form-image-preview').classList.add('hidden');
+                    document.getElementById('form-image-icon').classList.remove('hidden');
+                }
+            }, 50);
+        };
+
+        window.saveProduct = async function() {
+            if(!window.appState.user) return Swal.fire('Error', 'กรุณารอระบบเชื่อมต่อฐานข้อมูล', 'error');
+            const barcode = document.getElementById('form-barcode').value.trim();
+            const name = document.getElementById('form-name').value.trim();
+            const category = document.getElementById('form-category').value;
+            const cost = parseFloat(document.getElementById('form-cost').value) || 0;
+            const price = parseFloat(document.getElementById('form-price').value);
+            const stock = parseInt(document.getElementById('form-stock').value) || 0;
+            const isWeighed = document.getElementById('form-isWeighed').checked;
+            const image = document.getElementById('form-image-base64').value;
+
+            if(!barcode || !name || isNaN(price)) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลบาร์โค้ด ชื่อสินค้า และราคาให้ถูกต้อง', 'warning');
+            
+            const productData = { barcode, name, category, cost, price, stock, isWeighed, image, updatedAt: Date.now() };
+
+            try {
+                if(currentEditId) {
+                    await updateDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'products', currentEditId), productData);
+                    Swal.fire({icon: 'success', title: 'อัปเดตสำเร็จ', timer: 1500, showConfirmButton: false});
+                } else {
+                    if(window.appState.products.some(p => p.barcode === barcode)) {
+                        return Swal.fire('แจ้งเตือน', 'บาร์โค้ดนี้มีในระบบแล้ว', 'error');
+                    }
+                    await addDoc(getColPath('products'), { ...productData, createdAt: Date.now() });
+                    Swal.fire({icon: 'success', title: 'เพิ่มสินค้าสำเร็จ', timer: 1500, showConfirmButton: false});
+                }
+                closeProductModal();
+            } catch (e) {
+                console.error("Save Error:", e);
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+            }
+        };
+
+        window.deleteProduct = function(id) {
+            Swal.fire({
+                title: 'ลบสินค้านี้?', text: "ลบแล้วจะไม่สามารถกู้คืนได้!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#e07a5f', confirmButtonText: 'ลบข้อมูล', cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await deleteDoc(doc(window.appState.db, 'artifacts', window.appState.appId, 'public', 'data', 'products', id));
+                    Swal.fire({icon: 'success', title: 'ลบสำเร็จ', timer: 1500, showConfirmButton: false});
+                }
+            });
+        };
 
         window.forceSeedData = async function() {
             if(!window.appState.user) return Swal.fire('Error', 'รอเชื่อมต่อฐานข้อมูล', 'error');
